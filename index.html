@@ -1,0 +1,588 @@
+import React, { useState, useEffect } from 'react';
+
+// --- Data Preparation ---
+const quizData = [
+  {
+    id: 1,
+    question: "خانم باردار در هفتهٔ ۳۳ با درد پایدار اپی‌گاستر و RUQ، تهوع، پلاکت پایین و افزایش ترانس‌آمینازها مراجعه کرده است. ضربان قلب جنین اطمینان‌بخش است. مناسب‌ترین رویکرد کدام است؟",
+    options: [
+      { id: 'الف', text: "تأخیر در زایمان تا تکمیل کورتیکواستروئید، حتی در صورت بدترشدن وضعیت مادر" },
+      { id: 'ب', text: "ارزیابی و تثبیت مادر، کنترل فشارخون شدید در صورت وجود، سولفات منیزیم در صورت نیاز و سپس ختم بارداری بر اساس وضعیت مامایی" },
+      { id: 'ج', text: "انتقال فوری برای سزارین، بدون انجام اقدامات تثبیت‌کننده" },
+      { id: 'د', text: "ترخیص بیمار با توصیه به مراجعه در صورت افزایش درد" }
+    ],
+    correctAnswer: 'ب',
+    reasoning: "درد RUQ همراه ترومبوسیتوپنی و اختلال کبدی، HELLP را مطرح می‌کند. در بیماری شدید مادر، اولویت با تثبیت و سپس ختم بارداری است؛ HELLP به‌تنهایی مساوی سزارین فوری نیست.",
+    pitfalls: "الف = تأخیر خطرناک؛ ج = زایمان پیش از تثبیت؛ د = نادیده‌گرفتن بیماری شدید."
+  },
+  {
+    id: 2,
+    question: "خانم ۲۸ ساله با لوپوس در هفتهٔ ۱۱ بارداری مراجعه کرده است. فشارخون و بررسی‌های فعلی طبیعی‌اند. کدام اقدام برای کاهش خطر پره‌اکلامپسی مناسب‌تر است؟",
+    options: [
+      { id: 'الف', text: "شروع آسپیرین کم‌دوز از هفتهٔ ۱۲ تا ۲۸، ترجیحاً پیش از هفتهٔ ۱۶" },
+      { id: 'ب', text: "تجویز ویتامین C و E با دوز بالا" },
+      { id: 'ج', text: "شروع هپارین بدون وجود اندیکاسیون دیگر" },
+      { id: 'د', text: "صبر تا هفتهٔ ۳۲ و سپس شروع آسپیرین" }
+    ],
+    correctAnswer: 'الف',
+    reasoning: "بیماری‌های خودایمنی از ریسک‌فاکتورهای پرخطر پره‌اکلامپسی هستند.",
+    pitfalls: "ب = داروی بدون نقش اثبات‌شده در منبع؛ ج = هپارین بدون اندیکاسیون؛ د = خطای زمان‌بندی."
+  },
+  {
+    id: 3,
+    question: "خانمی که در بارداری مبتلا به دیابت بارداری بوده، پس از زایمان برای پیگیری مراجعه کرده است. کدام بررسی منبعی برای ارزیابی اختلال گلوکز پس از زایمان مناسب‌تر است؟",
+    options: [
+      { id: 'الف', text: "GCT با ۵۰ گرم گلوکز" },
+      { id: 'ب', text: "OGTT با ۷۵ گرم گلوکز" },
+      { id: 'ج', text: "قند خون یک ساعت پس از غذا به‌تنهایی" },
+      { id: 'د', text: "شروع انسولین بدون انجام ارزیابی مجدد" }
+    ],
+    correctAnswer: 'ب',
+    reasoning: "پیگیری پس از زایمان در GDM با OGTT ۷۵ گرمی انجام می‌شود.",
+    pitfalls: "الف = تست غربالگری بارداری؛ ج = ارزیابی ناکافی؛ د = درمان پیش از اثبات نیاز."
+  },
+  {
+    id: 4,
+    question: "جنین یک مادر باردار دچار FGR است و در داپلر شریان نافی، جریان پایان‌دیاستولی معکوس دیده می‌شود. مادر و جنین فعلاً پایدارند. کدام تفسیر درست‌تر است؟",
+    options: [
+      { id: 'الف', text: "تا هفتهٔ ۳۹ نیازی به تغییر برنامه وجود ندارد." },
+      { id: 'ب', text: "فقط بر اساس داپلر باید یک هفتهٔ قطعی و ثابت برای زایمان تعیین کرد." },
+      { id: 'ج', text: "این یافته با افزایش عوارض پری‌ناتال همراه است و نیاز به ختم زودتر دارد؛ زمان دقیق بر اساس وضعیت مادر، جنین و شرایط مامایی تعیین می‌شود." },
+      { id: 'د', text: "داپلر شریان نافی در FGR ارزشی ندارد." }
+    ],
+    correctAnswer: 'ج',
+    reasoning: "حذف یا معکوس‌شدن جریان پایان‌دیاستولی، نشانهٔ مقاومت شدید جفتی است.",
+    pitfalls: "الف = تأخیر؛ ب = ساختن عدد ثابت خارج از منبع؛ د = نادیده‌گرفتن تست کلیدی."
+  },
+  {
+    id: 5,
+    question: "خانم شیرده با لکه‌بینی مراجعه کرده است. علائم حیاتی پایدار است، رحم در سونوگرافی خالی است و تودهٔ آدنکسال کوچک بدون ضربان قلب دیده می‌شود. β-hCG برابر ۳۷۰۰ است. بهترین درمان فعال کدام است؟",
+    options: [
+      { id: 'الف', text: "متوترکسات تک‌دوز" },
+      { id: 'ب', text: "لاپاروسکوپی" },
+      { id: 'ج', text: "فقط تکرار β-hCG در ۴۸ ساعت" },
+      { id: 'د', text: "ساکشن کورتاژ" }
+    ],
+    correctAnswer: 'ب',
+    reasoning: "بیمار از نظر معیارهای بالینی می‌تواند کاندید درمان فعال باشد، اما شیردهی منع مطلق متوترکسات است؛ بنابراین درمان جراحی مطرح می‌شود.",
+    pitfalls: "الف = حذف عامل شیردهی؛ ج = تأخیر درمان؛ د = درمان نامرتبط با تودهٔ آدنکسال."
+  },
+  {
+    id: 6,
+    question: "بلافاصله پس از زایمان، بیمار دچار خونریزی شدید شده است. فوندوس رحم از روی شکم لمس نمی‌شود و توده‌ای در واژن دیده می‌شود. اولین اقدام مناسب چیست؟",
+    options: [
+      { id: 'الف', text: "کشیدن بند ناف" },
+      { id: 'ب', text: "جااندازی دستی رحم و استفاده از شل‌کنندهٔ رحمی در صورت نیاز" },
+      { id: 'ج', text: "افزایش اکسی‌توسین و ماساژ تودهٔ واژینال" },
+      { id: 'د', text: "هیسترکتومی فوری بدون تلاش برای جااندازی" }
+    ],
+    correctAnswer: 'ب',
+    reasoning: "عدم لمس فوندوس همراه با تودهٔ واژینال، وارونگی رحم را مطرح می‌کند.",
+    pitfalls: "الف = تشدید آسیب؛ ج = درمان آتونی، نه وارونگی؛ د = اقدام بیش‌ازحد پیش از جااندازی دستی."
+  },
+  {
+    id: 7,
+    question: "خانم باردار در نخستین ویزیت، BMI برابر ۳۵ و سابقهٔ تولد نوزاد ۴۳۰۰ گرمی دارد. مناسب‌ترین رویکرد غربالگری دیابت چیست؟",
+    options: [
+      { id: 'الف', text: "انتظار تا هفتهٔ ۲۴ تا ۲۸" },
+      { id: 'ب', text: "انجام غربالگری دیابت در نخستین ویزیت" },
+      { id: 'ج', text: "شروع انسولین بدون آزمایش" },
+      { id: 'د', text: "درخواست آمنیوسنتز برای بررسی ماکروزومی" }
+    ],
+    correctAnswer: 'ب',
+    reasoning: "چاقی و سابقهٔ نوزاد درشت، بیمار را پرخطر می‌کند؛ بنابراین نباید تا غربالگری روتین صبر کرد.",
+    pitfalls: "الف = خطای زمان‌بندی؛ ج = درمان بدون تشخیص؛ د = تست نامرتبط."
+  },
+  {
+    id: 8,
+    question: "خانم باردارِ دارای صلاحیت تصمیم‌گیری، با وجود توضیح خطرات، سزارین پیشنهادی را نمی‌پذیرد. کدام برخورد حرفه‌ای مناسب‌تر است؟",
+    options: [
+      { id: 'الف', text: "اجبار بیمار به سزارین با حکم قانونی" },
+      { id: 'ب', text: "بررسی نگرانی‌های بیمار، توضیح شفاف خطرات و گزینه‌ها، مستندسازی تصمیم و احترام به رد درمان" },
+      { id: 'ج', text: "درخواست روان‌پزشکی فقط برای بی‌اعتبارکردن تصمیم بیمار" },
+      { id: 'د', text: "تهدید بیمار به قطع درمان" }
+    ],
+    correctAnswer: 'ب',
+    reasoning: "زن باردارِ دارای ظرفیت تصمیم‌گیری حق رد درمان پیشنهادی را دارد.",
+    pitfalls: "الف، ج و د = نقض استقلال بیمار و برخورد غیرحرفه‌ای."
+  },
+  {
+    id: 9,
+    question: "خانم باردار مبتلا به اکلامپسی، پس از دریافت دوز بارگیری سولفات منیزیم، دوباره تشنج می‌کند. اقدام دارویی ارجح چیست؟",
+    options: [
+      { id: 'الف', text: "دیازپام به‌عنوان درمان خط اول" },
+      { id: 'ب', text: "فنی‌توئین به‌عنوان درمان خط اول" },
+      { id: 'ج', text: "دوز اضافی ۲ تا ۴ گرم سولفات منیزیم وریدی" },
+      { id: 'د', text: "سزارین در حین تشنج فعال" }
+    ],
+    correctAnswer: 'ج',
+    reasoning: "تشنج مجدد حین دریافت منیزیم با دوز اضافی سولفات منیزیم درمان می‌شود.",
+    pitfalls: "الف و ب = انتخاب نادرست داروی خط اول؛ د = ختم بارداری پیش از تثبیت مادر."
+  },
+  {
+    id: 10,
+    question: "خانم ۲۹ ساله با سقط‌های مکرر و آنتی‌کاردیولیپین مثبت، در هفتهٔ ۷ بارداری مراجعه کرده است. درمان منبعی کدام است؟",
+    options: [
+      { id: 'الف', text: "آسپیرین کم‌دوز به‌تنهایی" },
+      { id: 'ب', text: "هپارین شکسته‌نشده همراه آسپیرین کم‌دوز" },
+      { id: 'ج', text: "وارفارین در سه‌ماههٔ اول" },
+      { id: 'د', text: "پردنیزولون با دوز بالا" }
+    ],
+    correctAnswer: 'ب',
+    reasoning: "در APS همراه سقط مکرر، درمان منبعی با شروع بارداری شامل آسپیرین کم‌دوز و هپارین شکسته‌نشده است.",
+    pitfalls: "الف = ناکافی؛ ج = داروی نامناسب در بارداری؛ د = درمان بدون پشتوانهٔ منبع."
+  },
+  {
+    id: 11,
+    question: "خانم جوانی با خونریزی اوایل بارداری، تهوع شدید، رحم بزرگ‌تر از سن بارداری، β-hCG بالا و نمای طوفان برف مراجعه کرده است. کدام مورد جزء ارزیابی روتین پیش از ساکشن کورتاژ نیست؟",
+    options: [
+      { id: 'الف', text: "β-hCG پایه و CBC" },
+      { id: 'ب', text: "رادیوگرافی قفسهٔ سینه" },
+      { id: 'ج', text: "CT مغز و ریه" },
+      { id: 'د', text: "گروه خونی، آزمایش‌های انعقادی و بررسی تیروئید در صورت وجود شواهد بالینی" }
+    ],
+    correctAnswer: 'ج',
+    reasoning: "CT مغز و ریه ارزیابی روتین پیش از تخلیهٔ مول نیست.",
+    pitfalls: "سایر گزینه‌ها در ارزیابی پایه یا بر اساس وضعیت بالینی مطرح هستند."
+  },
+  {
+    id: 12,
+    question: "خانم ۳۷ ساله با دو سزارین قبلی و جفت سرراهی، در بررسی‌ها مشکوک به چسبندگی غیرطبیعی جفت است. رویکرد منبعی مناسب‌تر کدام است؟",
+    options: [
+      { id: 'الف', text: "کوشش برای جداکردن جفت پس از خروج جنین" },
+      { id: 'ب', text: "سزارین هیسترکتومی برنامه‌ریزی‌شده با باقی‌گذاشتن جفت در رحم" },
+      { id: 'ج', text: "انتظار برای جداشدن خودبه‌خودی جفت با ماساژ شدید رحم" },
+      { id: 'د', text: "تجویز داروی یوتروتونیک به‌عنوان درمان قطعی آکرتا" }
+    ],
+    correctAnswer: 'ب',
+    reasoning: "جفت سرراهی همراه سزارین قبلی، خطر آکرتا را بالا می‌برد؛ جداکردن اجباری جفت می‌تواند خونریزی را تشدید کند.",
+    pitfalls: "الف و ج = تشدید خونریزی؛ د = درمان نامتناسب با مکانیسم بیماری."
+  },
+  {
+    id: 13,
+    question: "خانم باردار با علائم روزانهٔ آسم، بیدارشدن شبانه بیش از یک‌بار در هفته و محدودیت فعالیت روزانه مراجعه کرده است. مناسب‌ترین درمان نگهدارنده چیست؟",
+    options: [
+      { id: 'الف', text: "سالبوتامول فقط در صورت نیاز" },
+      { id: 'ب', text: "کورتیکواستروئید استنشاقی کم‌دوز همراه سالمترول" },
+      { id: 'ج', text: "کورتیکواستروئید خوراکی روزانه به‌عنوان اولین انتخاب" },
+      { id: 'د', text: "قطع تمام درمان‌ها تا پس از زایمان" }
+    ],
+    correctAnswer: 'ب',
+    reasoning: "تابلوی بیمار با آسم پایدار متوسط سازگار است.",
+    pitfalls: "الف = درمان ناکافی؛ ج = بیش‌درمانی؛ د = خطر هیپوکسی مادر و جنین."
+  },
+  {
+    id: 14,
+    question: "دختر ۱۶ ساله با آمنورهٔ اولیه، فقدان تکامل پستان، FSH بالا و کاریوتایپ 45,XO مراجعه کرده است. کدام ترتیب درمانی صحیح‌تر است؟",
+    options: [
+      { id: 'الف', text: "پروژسترون فوری پیش از هر درمان دیگر" },
+      { id: 'ب', text: "استروژن با دوز بالا پیش از هورمون رشد" },
+      { id: 'ج', text: "هورمون رشد پیش از شروع استروژن کم‌دوز و سپس افزودن پروژسترون در مرحلهٔ مناسب تکامل پستان" },
+      { id: 'د', text: "عدم درمان تا پس از ۱۸ سالگی" }
+    ],
+    correctAnswer: 'ج',
+    reasoning: "در ترنر، هورمون رشد پیش از استروژن آغاز می‌شود؛ پروژسترون نیز نباید زودتر از تکامل مناسب پستان تجویز شود.",
+    pitfalls: "الف و ب = ترتیب درمانی غلط؛ د = تأخیر غیرموجه."
+  },
+  {
+    id: 15,
+    question: "خانم باردار در هفتهٔ ۲۹ با PPROM، انقباضات منظم و دیلاتاسیون ۶ سانتی‌متری مراجعه کرده است. شواهد عفونت وجود ندارد و وضعیت جنین اطمینان‌بخش است. کدام رویکرد مناسب‌تر است؟",
+    options: [
+      { id: 'الف', text: "نیفدیپین برای توقف زایمان تا ۴۸ ساعت" },
+      { id: 'ب', text: "کورتیکواستروئید، سولفات منیزیم برای محافظت عصبی جنین و پروفیلاکسی GBS؛ بدون توکولیز" },
+      { id: 'ج', text: "سزارین اجباری بدون وجود اندیکاسیون مامایی" },
+      { id: 'د', text: "پروژسترون برای متوقف‌کردن لیبر فعال" }
+    ],
+    correctAnswer: 'ب',
+    reasoning: "PPROM و دیلاتاسیون پیشرفته از موارد نامناسب برای توکولیز هستند.",
+    pitfalls: "الف = خطای زمان‌بندی؛ ج = سزارین غیرضروری؛ د = کاربرد نادرست پروژسترون."
+  },
+  {
+    id: 16,
+    question: "خانم ۲۶ ساله با اندومتریوز و درد لگنی، پس از جراحی فعلاً قصد بارداری ندارد. مناسب‌ترین اصل درمانی پس از کنترل جراحی کدام است؟",
+    options: [
+      { id: 'الف', text: "اصرار بر بارداری فوری" },
+      { id: 'ب', text: "درمان هورمونی سرکوب‌گر برای کنترل علائم با توضیح احتمال عود پس از قطع درمان" },
+      { id: 'ج', text: "اطمینان از درمان قطعی و عدم نیاز به پیگیری" },
+      { id: 'د', text: "شروع درمان ناباروری بدون وجود تمایل به بارداری" }
+    ],
+    correctAnswer: 'ب',
+    reasoning: "انتخاب درمان در اندومتریوز باید با درد، شدت بیماری و تمایل به باروری هماهنگ باشد.",
+    pitfalls: "الف و د = نادیده‌گرفتن ترجیح بیمار؛ ج = تصور نادرست درمان قطعی."
+  },
+  {
+    id: 17,
+    question: "خانم باردار در نیمهٔ دوم بارداری با خارش شدید کف دست و پا، بدون راش پوستی، افزایش اسیدهای صفراوی و افزایش خفیف ترانس‌آمینازها مراجعه کرده است. مناسب‌ترین درمان دارویی چیست؟",
+    options: [
+      { id: 'الف', text: "اورسودئوکسی‌کولیک اسید" },
+      { id: 'ب', text: "آنتی‌بیوتیک وسیع‌الطیف" },
+      { id: 'ج', text: "کورتیکواستروئید خوراکی برای درمان اصلی بیماری" },
+      { id: 'د', text: "قطع بارداری فقط بر اساس وجود خارش" }
+    ],
+    correctAnswer: 'الف',
+    reasoning: "تابلوی بیمار با کلستاز داخل‌کبدی حاملگی هماهنگ است و UDCA به کاهش اسیدهای صفراوی و خارش کمک می‌کند.",
+    pitfalls: "د = زمان ختم را نمی‌توان فقط بر اساس خارش یا عددی خارج از منبع تعیین کرد."
+  },
+  {
+    id: 18,
+    question: "در پاپ‌اسمیر خانم ۴۷ ساله، سلول‌های غده‌ای آتیپیک گزارش شده است. مناسب‌ترین اقدام بعدی کدام است؟",
+    options: [
+      { id: 'الف', text: "تکرار پاپ‌اسمیر شش ماه بعد" },
+      { id: 'ب', text: "بیوپسی اندومتر" },
+      { id: 'ج', text: "هیسترکتومی" },
+      { id: 'د', text: "درمان با استروژن موضعی و تکرار سیتولوژی" }
+    ],
+    correctAnswer: 'ب',
+    reasoning: "وجود سلول‌های غده‌ای یا اندومتریال آتیپیک در سیتولوژی، ارزیابی اندومتر را مطرح می‌کند.",
+    pitfalls: "الف و د = تأخیر در ارزیابی تشخیصی؛ ج = اقدام قطعی پیش از اثبات بافت‌شناسی."
+  },
+  {
+    id: 19,
+    question: "خانم ۳۶ ساله با فشارخون مزمن در هفتهٔ ۱۰ بارداری مراجعه کرده است. BMI او ۳۲ است. مناسب‌ترین پیشگیری از پره‌اکلامپسی کدام است؟",
+    options: [
+      { id: 'الف', text: "ویتامین C و E" },
+      { id: 'ب', text: "آسپیرین کم‌دوز از هفتهٔ ۱۲ تا ۲۸، ترجیحاً پیش از هفتهٔ ۱۶" },
+      { id: 'ج', text: "هپارین بدون وجود APS" },
+      { id: 'د', text: "آسپیرین کم‌دوز از هفتهٔ ۳۲" }
+    ],
+    correctAnswer: 'ب',
+    reasoning: "فشارخون مزمن به‌تنهایی ریسک‌فاکتور پرخطر است.",
+    pitfalls: "الف و ج = درمان نامناسب؛ د = شروع دیرهنگام."
+  },
+  {
+    id: 20,
+    question: "مادر باردار در سه‌ماههٔ سوم دچار ایست قلبی ـ تنفسی شده است. CPR فوری و مؤثر آغاز شده، اما پس از ۴ دقیقه بازگشت گردش خون رخ نداده است. اقدام مهم بعدی چیست؟",
+    options: [
+      { id: 'الف', text: "توقف CPR برای ارزیابی ضربان قلب جنین" },
+      { id: 'ب', text: "انتقال بیمار به اتاق عمل و سپس تصمیم‌گیری" },
+      { id: 'ج', text: "درنظرگرفتن سزارین اورژانس هم‌زمان با تداوم احیا" },
+      { id: 'د', text: "ادامهٔ CPR برای ۱۵ دقیقهٔ دیگر، بدون بررسی امکان سزارین" }
+    ],
+    correctAnswer: 'ج',
+    reasoning: "در سه‌ماههٔ سوم، سزارین اورژانس می‌تواند با کاهش فشار رحم بر عروق بزرگ، احیای مادر را نیز مؤثرتر کند.",
+    pitfalls: "الف و ب = ایجاد تأخیر؛ د = نادیده‌گرفتن تصمیم زمان‌حساس."
+  }
+];
+
+// --- Icons Components (Inline SVGs for reliable Canvas rendering) ---
+const CheckCircleIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-500">
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>
+  </svg>
+);
+
+const XCircleIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-rose-500">
+    <circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>
+  </svg>
+);
+
+const InfoIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500 ml-2">
+    <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>
+  </svg>
+);
+
+const AlertTriangleIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-500 ml-2">
+    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>
+  </svg>
+);
+
+const ChevronRightIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1">
+    <path d="m9 18 6-6-6-6"></path>
+  </svg>
+);
+
+const ChevronLeftIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+    <path d="m15 18-6-6 6-6"></path>
+  </svg>
+);
+
+const StethoscopeIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-teal-600 ml-3">
+    <path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"></path>
+    <path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"></path>
+    <circle cx="20" cy="10" r="2"></circle>
+  </svg>
+);
+
+// --- Main Application Component ---
+export default function App() {
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [selectedOption, setSelectedOption] = useState(null);
+  const [isAnswerChecked, setIsAnswerChecked] = useState(false);
+  const [userAnswers, setUserAnswers] = useState({});
+  const [showResults, setShowResults] = useState(false);
+
+  // Inject Font styling to ensure Persian typography looks premium
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      @import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.0.0/Vazirmatn-font-face.css');
+      * { font-family: 'Vazirmatn', sans-serif; }
+    `;
+    document.head.appendChild(style);
+    return () => document.head.removeChild(style);
+  }, []);
+
+  const question = quizData[currentQuestionIndex];
+  const totalQuestions = quizData.length;
+
+  const handleOptionSelect = (optionId) => {
+    if (!isAnswerChecked) {
+      setSelectedOption(optionId);
+    }
+  };
+
+  const handleCheckAnswer = () => {
+    if (!selectedOption) return;
+    setIsAnswerChecked(true);
+    
+    // Save answer
+    setUserAnswers({
+      ...userAnswers,
+      [question.id]: {
+        selected: selectedOption,
+        isCorrect: selectedOption === question.correctAnswer
+      }
+    });
+  };
+
+  const handleNextQuestion = () => {
+    if (currentQuestionIndex < totalQuestions - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      resetStateForNewQuestion();
+    } else {
+      setShowResults(true);
+    }
+  };
+
+  const handlePrevQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(currentQuestionIndex - 1);
+      // Restore state if previously answered
+      const prevAnswer = userAnswers[quizData[currentQuestionIndex - 1].id];
+      if (prevAnswer) {
+        setSelectedOption(prevAnswer.selected);
+        setIsAnswerChecked(true);
+      } else {
+        resetStateForNewQuestion();
+      }
+    }
+  };
+
+  const resetStateForNewQuestion = () => {
+    const existingAnswer = userAnswers[quizData[currentQuestionIndex + 1]?.id];
+    if (existingAnswer) {
+      setSelectedOption(existingAnswer.selected);
+      setIsAnswerChecked(true);
+    } else {
+      setSelectedOption(null);
+      setIsAnswerChecked(false);
+    }
+  };
+
+  const calculateScore = () => {
+    let correctCount = 0;
+    Object.values(userAnswers).forEach(ans => {
+      if (ans.isCorrect) correctCount++;
+    });
+    return correctCount;
+  };
+
+  // Render Results View
+  if (showResults) {
+    const score = calculateScore();
+    const percentage = Math.round((score / totalQuestions) * 100);
+    
+    return (
+      <div dir="rtl" className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-8 text-center border border-slate-100">
+          <StethoscopeIcon className="mx-auto h-16 w-16 text-teal-600 mb-4" />
+          <h2 className="text-3xl font-bold text-slate-800 mb-2">پایان آزمون</h2>
+          <p className="text-slate-500 mb-8">شما به تمام سوالات پاسخ دادید.</p>
+          
+          <div className="bg-slate-50 rounded-xl p-6 mb-8 inline-block shadow-sm border border-slate-100">
+            <div className="text-5xl font-bold text-teal-600 mb-2">{percentage}٪</div>
+            <div className="text-slate-600 text-lg">
+              پاسخ صحیح: <span className="font-bold text-slate-800">{score}</span> از <span className="font-bold text-slate-800">{totalQuestions}</span>
+            </div>
+          </div>
+          
+          <div className="space-y-4">
+            <button 
+              onClick={() => {
+                setShowResults(false);
+                setCurrentQuestionIndex(0);
+                setUserAnswers({});
+                resetStateForNewQuestion();
+              }}
+              className="w-full sm:w-auto px-8 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-medium transition-colors shadow-md hover:shadow-lg"
+            >
+              شروع مجدد آزمون
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Render Quiz View
+  return (
+    <div dir="rtl" className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8 text-right">
+      <div className="max-w-4xl mx-auto">
+        
+        {/* Header */}
+        <header className="flex items-center justify-between mb-8 pb-4 border-b border-slate-200">
+          <div className="flex items-center">
+            <StethoscopeIcon />
+            <h1 className="text-2xl font-bold text-slate-800">مجموعهٔ زنان و زایمان</h1>
+          </div>
+          <div className="text-sm font-medium text-slate-500 bg-white px-4 py-2 rounded-full shadow-sm border border-slate-100">
+            سوال {currentQuestionIndex + 1} از {totalQuestions}
+          </div>
+        </header>
+
+        {/* Progress Bar */}
+        <div className="w-full bg-slate-200 rounded-full h-2 mb-8">
+          <div 
+            className="bg-teal-500 h-2 rounded-full transition-all duration-500 ease-out" 
+            style={{ width: `${((currentQuestionIndex + 1) / totalQuestions) * 100}%` }}
+          ></div>
+        </div>
+
+        {/* Main Card */}
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden mb-6">
+          <div className="p-6 sm:p-8">
+            <h2 className="text-lg sm:text-xl font-semibold text-slate-800 leading-relaxed mb-6">
+              <span className="text-teal-600 ml-2">{question.id}.</span>
+              {question.question}
+            </h2>
+
+            <div className="space-y-3">
+              {question.options.map((option) => {
+                const isSelected = selectedOption === option.id;
+                const isCorrectAnswer = option.id === question.correctAnswer;
+                
+                let optionStyle = "border-slate-200 bg-white hover:bg-slate-50 text-slate-700";
+                
+                if (isAnswerChecked) {
+                  if (isCorrectAnswer) {
+                    optionStyle = "border-emerald-500 bg-emerald-50 text-emerald-800";
+                  } else if (isSelected && !isCorrectAnswer) {
+                    optionStyle = "border-rose-500 bg-rose-50 text-rose-800";
+                  } else {
+                    optionStyle = "border-slate-200 bg-slate-50 text-slate-400 opacity-70";
+                  }
+                } else if (isSelected) {
+                  optionStyle = "border-teal-500 bg-teal-50 text-teal-800 ring-1 ring-teal-500";
+                }
+
+                return (
+                  <button
+                    key={option.id}
+                    onClick={() => handleOptionSelect(option.id)}
+                    disabled={isAnswerChecked}
+                    className={`w-full text-right flex items-start p-4 rounded-xl border-2 transition-all duration-200 ${optionStyle}`}
+                  >
+                    <span className="flex-shrink-0 w-8 h-8 rounded-full border border-current flex items-center justify-center ml-4 font-medium">
+                      {option.id}
+                    </span>
+                    <span className="flex-grow pt-1 leading-relaxed">
+                      {option.text}
+                    </span>
+                    {isAnswerChecked && isCorrectAnswer && (
+                      <span className="flex-shrink-0 mr-4 mt-1">
+                        <CheckCircleIcon />
+                      </span>
+                    )}
+                    {isAnswerChecked && isSelected && !isCorrectAnswer && (
+                      <span className="flex-shrink-0 mr-4 mt-1">
+                        <XCircleIcon />
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Check Action */}
+            {!isAnswerChecked && (
+              <div className="mt-8 flex justify-end">
+                <button
+                  onClick={handleCheckAnswer}
+                  disabled={!selectedOption}
+                  className={`px-8 py-3 rounded-xl font-medium transition-all shadow-sm ${
+                    selectedOption 
+                      ? "bg-teal-600 hover:bg-teal-700 text-white shadow-md cursor-pointer" 
+                      : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                  }`}
+                >
+                  بررسی پاسخ
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Explanation Section */}
+          {isAnswerChecked && (
+            <div className="bg-slate-50 border-t border-slate-100 p-6 sm:p-8 animate-in slide-in-from-top-4 duration-300">
+              <div className="mb-6">
+                <div className="flex items-center mb-2">
+                  <InfoIcon />
+                  <h3 className="font-bold text-slate-800 text-lg">مسیر حل</h3>
+                </div>
+                <p className="text-slate-600 leading-relaxed bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                  {question.reasoning}
+                </p>
+              </div>
+              
+              <div>
+                <div className="flex items-center mb-2">
+                  <AlertTriangleIcon />
+                  <h3 className="font-bold text-slate-800 text-lg">دام‌ها</h3>
+                </div>
+                <p className="text-slate-600 leading-relaxed bg-amber-50 p-4 rounded-xl border border-amber-200 shadow-sm">
+                  {question.pitfalls}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Navigation Controls */}
+        <div className="flex items-center justify-between">
+          <button
+            onClick={handlePrevQuestion}
+            disabled={currentQuestionIndex === 0}
+            className={`flex items-center px-4 py-2 rounded-lg font-medium transition-colors ${
+              currentQuestionIndex === 0 
+                ? "text-slate-300 cursor-not-allowed" 
+                : "text-slate-600 hover:bg-slate-200 hover:text-slate-800 bg-white shadow-sm"
+            }`}
+          >
+            <ChevronRightIcon />
+            سوال قبلی
+          </button>
+
+          <button
+            onClick={handleNextQuestion}
+            disabled={!isAnswerChecked}
+            className={`flex items-center px-6 py-3 rounded-xl font-medium shadow-sm transition-all ${
+              !isAnswerChecked
+                ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                : "bg-teal-600 text-white hover:bg-teal-700 hover:shadow-md"
+            }`}
+          >
+            {currentQuestionIndex === totalQuestions - 1 ? "پایان آزمون" : "سوال بعدی"}
+            <ChevronLeftIcon />
+          </button>
+        </div>
+
+      </div>
+    </div>
+  );
+}
