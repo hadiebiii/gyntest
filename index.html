@@ -1,762 +1,411 @@
-import React, { useState, useEffect } from 'react';
-
-// --- Data Preparation ---
-const quizData = [
-  {
-    id: 1,
-    question: "خانم باردار در هفتهٔ ۳۳ با درد پایدار اپی‌گاستر و RUQ، تهوع، پلاکت پایین و افزایش ترانس‌آمینازها مراجعه کرده است. ضربان قلب جنین اطمینان‌بخش است. مناسب‌ترین رویکرد کدام است؟",
-    options: [
-      { id: 'الف', text: "تأخیر در زایمان تا تکمیل کورتیکواستروئید، حتی در صورت بدترشدن وضعیت مادر" },
-      { id: 'ب', text: "ارزیابی و تثبیت مادر، کنترل فشارخون شدید در صورت وجود، سولفات منیزیم در صورت نیاز و سپس ختم بارداری بر اساس وضعیت مامایی" },
-      { id: 'ج', text: "انتقال فوری برای سزارین، بدون انجام اقدامات تثبیت‌کننده" },
-      { id: 'د', text: "ترخیص بیمار با توصیه به مراجعه در صورت افزایش درد" }
-    ],
-    correctAnswer: 'ب',
-    reasoning: "درد RUQ همراه ترومبوسیتوپنی و اختلال کبدی، HELLP را مطرح می‌کند. در بیماری شدید مادر، اولویت با تثبیت و سپس ختم بارداری است؛ HELLP به‌تنهایی مساوی سزارین فوری نیست.",
-    pitfalls: "الف = تأخیر خطرناک؛ ج = زایمان پیش از تثبیت؛ د = نادیده‌گرفتن بیماری شدید."
-  },
-  {
-    id: 2,
-    question: "خانم ۲۸ ساله با لوپوس در هفتهٔ ۱۱ بارداری مراجعه کرده است. فشارخون و بررسی‌های فعلی طبیعی‌اند. کدام اقدام برای کاهش خطر پره‌اکلامپسی مناسب‌تر است؟",
-    options: [
-      { id: 'الف', text: "شروع آسپیرین کم‌دوز از هفتهٔ ۱۲ تا ۲۸، ترجیحاً پیش از هفتهٔ ۱۶" },
-      { id: 'ب', text: "تجویز ویتامین C و E با دوز بالا" },
-      { id: 'ج', text: "شروع هپارین بدون وجود اندیکاسیون دیگر" },
-      { id: 'د', text: "صبر تا هفتهٔ ۳۲ و سپس شروع آسپیرین" }
-    ],
-    correctAnswer: 'الف',
-    reasoning: "بیماری‌های خودایمنی از ریسک‌فاکتورهای پرخطر پره‌اکلامپسی هستند.",
-    pitfalls: "ب = داروی بدون نقش اثبات‌شده در منبع؛ ج = هپارین بدون اندیکاسیون؛ د = خطای زمان‌بندی."
-  },
-  {
-    id: 3,
-    question: "خانمی که در بارداری مبتلا به دیابت بارداری بوده، پس از زایمان برای پیگیری مراجعه کرده است. کدام بررسی منبعی برای ارزیابی اختلال گلوکز پس از زایمان مناسب‌تر است؟",
-    options: [
-      { id: 'الف', text: "GCT با ۵۰ گرم گلوکز" },
-      { id: 'ب', text: "OGTT با ۷۵ گرم گلوکز" },
-      { id: 'ج', text: "قند خون یک ساعت پس از غذا به‌تنهایی" },
-      { id: 'د', text: "شروع انسولین بدون انجام ارزیابی مجدد" }
-    ],
-    correctAnswer: 'ب',
-    reasoning: "پیگیری پس از زایمان در GDM با OGTT ۷۵ گرمی انجام می‌شود.",
-    pitfalls: "الف = تست غربالگری بارداری؛ ج = ارزیابی ناکافی؛ د = درمان پیش از اثبات نیاز."
-  },
-  {
-    id: 4,
-    question: "جنین یک مادر باردار دچار FGR است و در داپلر شریان نافی، جریان پایان‌دیاستولی معکوس دیده می‌شود. مادر و جنین فعلاً پایدارند. کدام تفسیر درست‌تر است؟",
-    options: [
-      { id: 'الف', text: "تا هفتهٔ ۳۹ نیازی به تغییر برنامه وجود ندارد." },
-      { id: 'ب', text: "فقط بر اساس داپلر باید یک هفتهٔ قطعی و ثابت برای زایمان تعیین کرد." },
-      { id: 'ج', text: "این یافته با افزایش عوارض پری‌ناتال همراه است و نیاز به ختم زودتر دارد؛ زمان دقیق بر اساس وضعیت مادر، جنین و شرایط مامایی تعیین می‌شود." },
-      { id: 'د', text: "داپلر شریان نافی در FGR ارزشی ندارد." }
-    ],
-    correctAnswer: 'ج',
-    reasoning: "حذف یا معکوس‌شدن جریان پایان‌دیاستولی، نشانهٔ مقاومت شدید جفتی است.",
-    pitfalls: "الف = تأخیر؛ ب = ساختن عدد ثابت خارج از منبع؛ د = نادیده‌گرفتن تست کلیدی."
-  },
-  {
-    id: 5,
-    question: "خانم شیرده با لکه‌بینی مراجعه کرده است. علائم حیاتی پایدار است، رحم در سونوگرافی خالی است و تودهٔ آدنکسال کوچک بدون ضربان قلب دیده می‌شود. β-hCG برابر ۳۷۰۰ است. بهترین درمان فعال کدام است؟",
-    options: [
-      { id: 'الف', text: "متوترکسات تک‌دوز" },
-      { id: 'ب', text: "لاپاروسکوپی" },
-      { id: 'ج', text: "فقط تکرار β-hCG در ۴۸ ساعت" },
-      { id: 'د', text: "ساکشن کورتاژ" }
-    ],
-    correctAnswer: 'ب',
-    reasoning: "بیمار از نظر معیارهای بالینی می‌تواند کاندید درمان فعال باشد، اما شیردهی منع مطلق متوترکسات است؛ بنابراین درمان جراحی مطرح می‌شود.",
-    pitfalls: "الف = حذف عامل شیردهی؛ ج = تأخیر درمان؛ د = درمان نامرتبط با تودهٔ آدنکسال."
-  },
-  {
-    id: 6,
-    question: "بلافاصله پس از زایمان، بیمار دچار خونریزی شدید شده است. فوندوس رحم از روی شکم لمس نمی‌شود و توده‌ای در واژن دیده می‌شود. اولین اقدام مناسب چیست؟",
-    options: [
-      { id: 'الف', text: "کشیدن بند ناف" },
-      { id: 'ب', text: "جااندازی دستی رحم و استفاده از شل‌کنندهٔ رحمی در صورت نیاز" },
-      { id: 'ج', text: "افزایش اکسی‌توسین و ماساژ تودهٔ واژینال" },
-      { id: 'د', text: "هیسترکتومی فوری بدون تلاش برای جااندازی" }
-    ],
-    correctAnswer: 'ب',
-    reasoning: "عدم لمس فوندوس همراه با تودهٔ واژینال، وارونگی رحم را مطرح می‌کند.",
-    pitfalls: "الف = تشدید آسیب؛ ج = درمان آتونی، نه وارونگی؛ د = اقدام بیش‌ازحد پیش از جااندازی دستی."
-  },
-  {
-    id: 7,
-    question: "خانم باردار در نخستین ویزیت، BMI برابر ۳۵ و سابقهٔ تولد نوزاد ۴۳۰۰ گرمی دارد. مناسب‌ترین رویکرد غربالگری دیابت چیست؟",
-    options: [
-      { id: 'الف', text: "انتظار تا هفتهٔ ۲۴ تا ۲۸" },
-      { id: 'ب', text: "انجام غربالگری دیابت در نخستین ویزیت" },
-      { id: 'ج', text: "شروع انسولین بدون آزمایش" },
-      { id: 'د', text: "درخواست آمنیوسنتز برای بررسی ماکروزومی" }
-    ],
-    correctAnswer: 'ب',
-    reasoning: "چاقی و سابقهٔ نوزاد درشت، بیمار را پرخطر می‌کند؛ بنابراین نباید تا غربالگری روتین صبر کرد.",
-    pitfalls: "الف = خطای زمان‌بندی؛ ج = درمان بدون تشخیص؛ د = تست نامرتبط."
-  },
-  {
-    id: 8,
-    question: "خانم باردارِ دارای صلاحیت تصمیم‌گیری، با وجود توضیح خطرات، سزارین پیشنهادی را نمی‌پذیرد. کدام برخورد حرفه‌ای مناسب‌تر است؟",
-    options: [
-      { id: 'الف', text: "اجبار بیمار به سزارین با حکم قانونی" },
-      { id: 'ب', text: "بررسی نگرانی‌های بیمار، توضیح شفاف خطرات و گزینه‌ها، مستندسازی تصمیم و احترام به رد درمان" },
-      { id: 'ج', text: "درخواست روان‌پزشکی فقط برای بی‌اعتبارکردن تصمیم بیمار" },
-      { id: 'د', text: "تهدید بیمار به قطع درمان" }
-    ],
-    correctAnswer: 'ب',
-    reasoning: "زن باردارِ دارای ظرفیت تصمیم‌گیری حق رد درمان پیشنهادی را دارد.",
-    pitfalls: "الف، ج و د = نقض استقلال بیمار و برخورد غیرحرفه‌ای."
-  },
-  {
-    id: 9,
-    question: "خانم باردار مبتلا به اکلامپسی، پس از دریافت دوز بارگیری سولفات منیزیم، دوباره تشنج می‌کند. اقدام دارویی ارجح چیست؟",
-    options: [
-      { id: 'الف', text: "دیازپام به‌عنوان درمان خط اول" },
-      { id: 'ب', text: "فنی‌توئین به‌عنوان درمان خط اول" },
-      { id: 'ج', text: "دوز اضافی ۲ تا ۴ گرم سولفات منیزیم وریدی" },
-      { id: 'د', text: "سزارین در حین تشنج فعال" }
-    ],
-    correctAnswer: 'ج',
-    reasoning: "تشنج مجدد حین دریافت منیزیم با دوز اضافی سولفات منیزیم درمان می‌شود.",
-    pitfalls: "الف و ب = انتخاب نادرست داروی خط اول؛ د = ختم بارداری پیش از تثبیت مادر."
-  },
-  {
-    id: 10,
-    question: "خانم ۲۹ ساله با سقط‌های مکرر و آنتی‌کاردیولیپین مثبت، در هفتهٔ ۷ بارداری مراجعه کرده است. درمان منبعی کدام است؟",
-    options: [
-      { id: 'الف', text: "آسپیرین کم‌دوز به‌تنهایی" },
-      { id: 'ب', text: "هپارین شکسته‌نشده همراه آسپیرین کم‌دوز" },
-      { id: 'ج', text: "وارفارین در سه‌ماههٔ اول" },
-      { id: 'د', text: "پردنیزولون با دوز بالا" }
-    ],
-    correctAnswer: 'ب',
-    reasoning: "در APS همراه سقط مکرر، درمان منبعی با شروع بارداری شامل آسپیرین کم‌دوز و هپارین شکسته‌نشده است.",
-    pitfalls: "الف = ناکافی؛ ج = داروی نامناسب در بارداری؛ د = درمان بدون پشتوانهٔ منبع."
-  },
-  {
-    id: 11,
-    question: "خانم جوانی با خونریزی اوایل بارداری، تهوع شدید، رحم بزرگ‌تر از سن بارداری، β-hCG بالا و نمای طوفان برف مراجعه کرده است. کدام مورد جزء ارزیابی روتین پیش از ساکشن کورتاژ نیست؟",
-    options: [
-      { id: 'الف', text: "β-hCG پایه و CBC" },
-      { id: 'ب', text: "رادیوگرافی قفسهٔ سینه" },
-      { id: 'ج', text: "CT مغز و ریه" },
-      { id: 'د', text: "گروه خونی، آزمایش‌های انعقادی و بررسی تیروئید در صورت وجود شواهد بالینی" }
-    ],
-    correctAnswer: 'ج',
-    reasoning: "CT مغز و ریه ارزیابی روتین پیش از تخلیهٔ مول نیست.",
-    pitfalls: "سایر گزینه‌ها در ارزیابی پایه یا بر اساس وضعیت بالینی مطرح هستند."
-  },
-  {
-    id: 12,
-    question: "خانم ۳۷ ساله با دو سزارین قبلی و جفت سرراهی، در بررسی‌ها مشکوک به چسبندگی غیرطبیعی جفت است. رویکرد منبعی مناسب‌تر کدام است؟",
-    options: [
-      { id: 'الف', text: "کوشش برای جداکردن جفت پس از خروج جنین" },
-      { id: 'ب', text: "سزارین هیسترکتومی برنامه‌ریزی‌شده با باقی‌گذاشتن جفت در رحم" },
-      { id: 'ج', text: "انتظار برای جداشدن خودبه‌خودی جفت با ماساژ شدید رحم" },
-      { id: 'د', text: "تجویز داروی یوتروتونیک به‌عنوان درمان قطعی آکرتا" }
-    ],
-    correctAnswer: 'ب',
-    reasoning: "جفت سرراهی همراه سزارین قبلی، خطر آکرتا را بالا می‌برد؛ جداکردن اجباری جفت می‌تواند خونریزی را تشدید کند.",
-    pitfalls: "الف و ج = تشدید خونریزی؛ د = درمان نامتناسب با مکانیسم بیماری."
-  },
-  {
-    id: 13,
-    question: "خانم باردار با علائم روزانهٔ آسم، بیدارشدن شبانه بیش از یک‌بار در هفته و محدودیت فعالیت روزانه مراجعه کرده است. مناسب‌ترین درمان نگهدارنده چیست؟",
-    options: [
-      { id: 'الف', text: "سالبوتامول فقط در صورت نیاز" },
-      { id: 'ب', text: "کورتیکواستروئید استنشاقی کم‌دوز همراه سالمترول" },
-      { id: 'ج', text: "کورتیکواستروئید خوراکی روزانه به‌عنوان اولین انتخاب" },
-      { id: 'د', text: "قطع تمام درمان‌ها تا پس از زایمان" }
-    ],
-    correctAnswer: 'ب',
-    reasoning: "تابلوی بیمار با آسم پایدار متوسط سازگار است.",
-    pitfalls: "الف = درمان ناکافی؛ ج = بیش‌درمانی؛ د = خطر هیپوکسی مادر و جنین."
-  },
-  {
-    id: 14,
-    question: "دختر ۱۶ ساله با آمنورهٔ اولیه، فقدان تکامل پستان، FSH بالا و کاریوتایپ 45,XO مراجعه کرده است. کدام ترتیب درمانی صحیح‌تر است؟",
-    options: [
-      { id: 'الف', text: "پروژسترون فوری پیش از هر درمان دیگر" },
-      { id: 'ب', text: "استروژن با دوز بالا پیش از هورمون رشد" },
-      { id: 'ج', text: "هورمون رشد پیش از شروع استروژن کم‌دوز و سپس افزودن پروژسترون در مرحلهٔ مناسب تکامل پستان" },
-      { id: 'د', text: "عدم درمان تا پس از ۱۸ سالگی" }
-    ],
-    correctAnswer: 'ج',
-    reasoning: "در ترنر، هورمون رشد پیش از استروژن آغاز می‌شود؛ پروژسترون نیز نباید زودتر از تکامل مناسب پستان تجویز شود.",
-    pitfalls: "الف و ب = ترتیب درمانی غلط؛ د = تأخیر غیرموجه."
-  },
-  {
-    id: 15,
-    question: "خانم باردار در هفتهٔ ۲۹ با PPROM، انقباضات منظم و دیلاتاسیون ۶ سانتی‌متری مراجعه کرده است. شواهد عفونت وجود ندارد و وضعیت جنین اطمینان‌بخش است. کدام رویکرد مناسب‌تر است؟",
-    options: [
-      { id: 'الف', text: "نیفدیپین برای توقف زایمان تا ۴۸ ساعت" },
-      { id: 'ب', text: "کورتیکواستروئید، سولفات منیزیم برای محافظت عصبی جنین و پروفیلاکسی GBS؛ بدون توکولیز" },
-      { id: 'ج', text: "سزارین اجباری بدون وجود اندیکاسیون مامایی" },
-      { id: 'د', text: "پروژسترون برای متوقف‌کردن لیبر فعال" }
-    ],
-    correctAnswer: 'ب',
-    reasoning: "PPROM و دیلاتاسیون پیشرفته از موارد نامناسب برای توکولیز هستند.",
-    pitfalls: "الف = خطای زمان‌بندی؛ ج = سزارین غیرضروری؛ د = کاربرد نادرست پروژسترون."
-  },
-  {
-    id: 16,
-    question: "خانم ۲۶ ساله با اندومتریوز و درد لگنی، پس از جراحی فعلاً قصد بارداری ندارد. مناسب‌ترین اصل درمانی پس از کنترل جراحی کدام است؟",
-    options: [
-      { id: 'الف', text: "اصرار بر بارداری فوری" },
-      { id: 'ب', text: "درمان هورمونی سرکوب‌گر برای کنترل علائم با توضیح احتمال عود پس از قطع درمان" },
-      { id: 'ج', text: "اطمینان از درمان قطعی و عدم نیاز به پیگیری" },
-      { id: 'د', text: "شروع درمان ناباروری بدون وجود تمایل به بارداری" }
-    ],
-    correctAnswer: 'ب',
-    reasoning: "انتخاب درمان در اندومتریوز باید با درد، شدت بیماری و تمایل به باروری هماهنگ باشد.",
-    pitfalls: "الف و د = نادیده‌گرفتن ترجیح بیمار؛ ج = تصور نادرست درمان قطعی."
-  },
-  {
-    id: 17,
-    question: "خانم باردار در نیمهٔ دوم بارداری با خارش شدید کف دست و پا، بدون راش پوستی، افزایش اسیدهای صفراوی و افزایش خفیف ترانس‌آمینازها مراجعه کرده است. مناسب‌ترین درمان دارویی چیست؟",
-    options: [
-      { id: 'الف', text: "اورسودئوکسی‌کولیک اسید" },
-      { id: 'ب', text: "آنتی‌بیوتیک وسیع‌الطیف" },
-      { id: 'ج', text: "کورتیکواستروئید خوراکی برای درمان اصلی بیماری" },
-      { id: 'د', text: "قطع بارداری فقط بر اساس وجود خارش" }
-    ],
-    correctAnswer: 'الف',
-    reasoning: "تابلوی بیمار با کلستاز داخل‌کبدی حاملگی هماهنگ است و UDCA به کاهش اسیدهای صفراوی و خارش کمک می‌کند.",
-    pitfalls: "د = زمان ختم را نمی‌توان فقط بر اساس خارش یا عددی خارج از منبع تعیین کرد."
-  },
-  {
-    id: 18,
-    question: "در پاپ‌اسمیر خانم ۴۷ ساله، سلول‌های غده‌ای آتیپیک گزارش شده است. مناسب‌ترین اقدام بعدی کدام است؟",
-    options: [
-      { id: 'الف', text: "تکرار پاپ‌اسمیر شش ماه بعد" },
-      { id: 'ب', text: "بیوپسی اندومتر" },
-      { id: 'ج', text: "هیسترکتومی" },
-      { id: 'د', text: "درمان با استروژن موضعی و تکرار سیتولوژی" }
-    ],
-    correctAnswer: 'ب',
-    reasoning: "وجود سلول‌های غده‌ای یا اندومتریال آتیپیک در سیتولوژی، ارزیابی اندومتر را مطرح می‌کند.",
-    pitfalls: "الف و د = تأخیر در ارزیابی تشخیصی؛ ج = اقدام قطعی پیش از اثبات بافت‌شناسی."
-  },
-  {
-    id: 19,
-    question: "خانم ۳۶ ساله با فشارخون مزمن در هفتهٔ ۱۰ بارداری مراجعه کرده است. BMI او ۳۲ است. مناسب‌ترین پیشگیری از پره‌اکلامپسی کدام است؟",
-    options: [
-      { id: 'الف', text: "ویتامین C و E" },
-      { id: 'ب', text: "آسپیرین کم‌دوز از هفتهٔ ۱۲ تا ۲۸، ترجیحاً پیش از هفتهٔ ۱۶" },
-      { id: 'ج', text: "هپارین بدون وجود APS" },
-      { id: 'د', text: "آسپیرین کم‌دوز از هفتهٔ ۳۲" }
-    ],
-    correctAnswer: 'ب',
-    reasoning: "فشارخون مزمن به‌تنهایی ریسک‌فاکتور پرخطر است.",
-    pitfalls: "الف و ج = درمان نامناسب؛ د = شروع دیرهنگام."
-  },
-  {
-    id: 20,
-    question: "مادر باردار در سه‌ماههٔ سوم دچار ایست قلبی ـ تنفسی شده است. CPR فوری و مؤثر آغاز شده، اما پس از ۴ دقیقه بازگشت گردش خون رخ نداده است. اقدام مهم بعدی چیست؟",
-    options: [
-      { id: 'الف', text: "توقف CPR برای ارزیابی ضربان قلب جنین" },
-      { id: 'ب', text: "انتقال بیمار به اتاق عمل و سپس تصمیم‌گیری" },
-      { id: 'ج', text: "درنظرگرفتن سزارین اورژانس هم‌زمان با تداوم احیا" },
-      { id: 'د', text: "ادامهٔ CPR برای ۱۵ دقیقهٔ دیگر، بدون بررسی امکان سزارین" }
-    ],
-    correctAnswer: 'ج',
-    reasoning: "در سه‌ماههٔ سوم، سزارین اورژانس می‌تواند با کاهش فشار رحم بر عروق بزرگ، احیای مادر را نیز مؤثرتر کند.",
-    pitfalls: "الف و ب = ایجاد تأخیر؛ د = نادیده‌گرفتن تصمیم زمان‌حساس."
-  }
-];
-
-// --- Icons Components ---
-const CheckCircleIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-500">
-    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>
-  </svg>
-);
-
-const XCircleIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-rose-500">
-    <circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>
-  </svg>
-);
-
-const InfoIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500 ml-2">
-    <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>
-  </svg>
-);
-
-const AlertTriangleIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-500 ml-2">
-    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>
-  </svg>
-);
-
-const ChevronRightIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1">
-    <path d="m9 18 6-6-6-6"></path>
-  </svg>
-);
-
-const ChevronLeftIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
-    <path d="m15 18-6-6 6-6"></path>
-  </svg>
-);
-
-const StethoscopeIcon = ({ className = "text-teal-600 ml-3 h-7 w-7" }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"></path>
-    <path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"></path>
-    <circle cx="20" cy="10" r="2"></circle>
-  </svg>
-);
-
-const PlayIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-2">
-    <polygon points="5 3 19 12 5 21 5 3"></polygon>
-  </svg>
-);
-
-const BookOpenIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-2">
-    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-  </svg>
-);
-
-const HomeIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-2">
-    <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-    <polyline points="9 22 9 12 15 12 15 22"></polyline>
-  </svg>
-);
-
-// --- Main Application Component ---
-export default function App() {
-  // App States: 'start', 'quiz', 'results', 'review'
-  const [appState, setAppState] = useState('start');
-  
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [reviewIndex, setReviewIndex] = useState(0);
-  
-  const [selectedOption, setSelectedOption] = useState(null);
-  const [isAnswerChecked, setIsAnswerChecked] = useState(false);
-  const [userAnswers, setUserAnswers] = useState({});
-
-  useEffect(() => {
-    const style = document.createElement('style');
-    style.innerHTML = `
-      @import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.0.0/Vazirmatn-font-face.css');
-      * { font-family: 'Vazirmatn', sans-serif; }
-    `;
-    document.head.appendChild(style);
-    return () => document.head.removeChild(style);
-  }, []);
-
-  const totalQuestions = quizData.length;
-
-  // --- Actions ---
-  const startQuiz = () => {
-    setAppState('quiz');
-    setCurrentQuestionIndex(0);
-    setUserAnswers({});
-    setSelectedOption(null);
-    setIsAnswerChecked(false);
-  };
-
-  const endQuiz = () => {
-    setAppState('results');
-  };
-
-  const goHome = () => {
-    setAppState('start');
-  };
-
-  const startReview = () => {
-    setReviewIndex(0);
-    setAppState('review');
-  };
-
-  const handleOptionSelect = (optionId) => {
-    if (!isAnswerChecked) {
-      setSelectedOption(optionId);
-    }
-  };
-
-  const handleCheckAnswer = () => {
-    if (!selectedOption) return;
-    setIsAnswerChecked(true);
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>آزمون تخصصی زنان و زایمان</title>
     
-    setUserAnswers({
-      ...userAnswers,
-      [quizData[currentQuestionIndex].id]: {
-        selected: selectedOption,
-        isCorrect: selectedOption === quizData[currentQuestionIndex].correctAnswer
-      }
-    });
-  };
-
-  const handleNextQuestion = () => {
-    if (currentQuestionIndex < totalQuestions - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-      
-      const existingAnswer = userAnswers[quizData[currentQuestionIndex + 1]?.id];
-      if (existingAnswer) {
-        setSelectedOption(existingAnswer.selected);
-        setIsAnswerChecked(true);
-      } else {
-        setSelectedOption(null);
-        setIsAnswerChecked(false);
-      }
-    } else {
-      endQuiz();
-    }
-  };
-
-  const calculateScore = () => {
-    let correctCount = 0;
-    Object.values(userAnswers).forEach(ans => {
-      if (ans.isCorrect) correctCount++;
-    });
-    return correctCount;
-  };
-
-  // --- Screens ---
-
-  if (appState === 'start') {
-    return (
-      <div dir="rtl" className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
-        <div className="bg-white rounded-3xl shadow-xl w-full max-w-2xl p-10 text-center border border-slate-100">
-          <div className="mx-auto bg-teal-50 w-24 h-24 rounded-full flex items-center justify-center mb-6">
-             <StethoscopeIcon className="h-12 w-12 text-teal-600 ml-0" />
-          </div>
-          <h1 className="text-3xl font-extrabold text-slate-800 mb-4 leading-relaxed">
-            مجموعهٔ بازطراحی‌شدهٔ<br/> منبع‌بسته زنان و زایمان
-          </h1>
-          <p className="text-slate-500 mb-10 text-lg leading-relaxed">
-            این آزمون شامل ۲۰ سوال تخصصی و شبیه‌سازی‌شده است. پس از پاسخ‌گویی به سوالات، درصد شما محاسبه شده و می‌توانید پاسخ‌نامه تشریحی را مرور کنید.
-          </p>
-          
-          <button 
-            onClick={startQuiz}
-            className="inline-flex items-center justify-center px-8 py-4 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl font-bold text-lg transition-all shadow-lg hover:shadow-teal-500/30 transform hover:-translate-y-1"
-          >
-            <PlayIcon />
-            شروع آزمون
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (appState === 'results') {
-    const score = calculateScore();
-    const percentage = Math.round((score / totalQuestions) * 100);
+    <!-- فونت وزیرمتن -->
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.0.0/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
     
-    return (
-      <div dir="rtl" className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-3xl shadow-xl w-full max-w-2xl p-10 text-center border border-slate-100">
-          <h2 className="text-3xl font-bold text-slate-800 mb-2">نتیجهٔ ارزیابی</h2>
-          <p className="text-slate-500 mb-8">عملکرد شما در این آزمون ثبت شد.</p>
-          
-          <div className="bg-slate-50 rounded-2xl p-8 mb-10 inline-block shadow-inner border border-slate-100 min-w-[250px]">
-            <div className={`text-6xl font-black mb-3 ${percentage >= 50 ? 'text-teal-600' : 'text-rose-500'}`}>
-              {percentage}٪
-            </div>
-            <div className="text-slate-600 text-lg">
-              پاسخ صحیح: <span className="font-bold text-slate-800 text-xl mx-1">{score}</span> از <span className="font-bold text-slate-800 text-xl mx-1">{totalQuestions}</span>
-            </div>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button 
-              onClick={startReview}
-              className="flex items-center justify-center px-6 py-3 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-medium transition-colors shadow-md"
-            >
-              <BookOpenIcon />
-              مرور پاسخ‌نامه
-            </button>
-            <button 
-              onClick={startQuiz}
-              className="flex items-center justify-center px-6 py-3 bg-teal-50 hover:bg-teal-100 text-teal-700 rounded-xl font-medium transition-colors border border-teal-200"
-            >
-              شروع مجدد
-            </button>
-            <button 
-              onClick={goHome}
-              className="flex items-center justify-center px-6 py-3 text-slate-500 hover:bg-slate-100 rounded-xl font-medium transition-colors"
-            >
-              <HomeIcon />
-              خروج
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Vazirmatn', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen">
 
-  if (appState === 'review') {
-    const question = quizData[reviewIndex];
-    const userAnswerData = userAnswers[question.id];
-    const studentAnswerId = userAnswerData?.selected;
-    const isCorrect = userAnswerData?.isCorrect;
-    
-    const correctOptionObj = question.options.find(o => o.id === question.correctAnswer);
-    const studentOptionObj = question.options.find(o => o.id === studentAnswerId);
+    <!-- Container اصلی برنامه -->
+    <div id="app-container"></div>
 
-    return (
-      <div dir="rtl" className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8 text-right">
-        <div className="max-w-4xl mx-auto">
-          
-          {/* Review Header */}
-          <header className="flex items-center justify-between mb-8 pb-4 border-b border-slate-200">
-            <div className="flex items-center">
-              <BookOpenIcon />
-              <h1 className="text-2xl font-bold text-slate-800 mr-2">پاسخ‌نامه تشریحی</h1>
-            </div>
-            <div className="flex gap-3 items-center">
-              <span className="text-sm font-bold text-slate-600 bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
-                سوال {reviewIndex + 1} از {totalQuestions}
-              </span>
-              <button onClick={() => setAppState('results')} className="text-sm text-rose-600 bg-rose-50 hover:bg-rose-100 px-4 py-2 rounded-lg font-medium transition-colors">
-                پایان مرور
-              </button>
-            </div>
-          </header>
+    <script>
+        // --- داده‌های آزمون ---
+        const quizData = [
+            { id: 1, question: "خانم باردار در هفتهٔ ۳۳ با درد پایدار اپی‌گاستر و RUQ، تهوع، پلاکت پایین و افزایش ترانس‌آمینازها مراجعه کرده است. ضربان قلب جنین اطمینان‌بخش است. مناسب‌ترین رویکرد کدام است؟", options: [{ id: 'الف', text: "تأخیر در زایمان تا تکمیل کورتیکواستروئید، حتی در صورت بدترشدن وضعیت مادر" }, { id: 'ب', text: "ارزیابی و تثبیت مادر، کنترل فشارخون شدید در صورت وجود، سولفات منیزیم در صورت نیاز و سپس ختم بارداری بر اساس وضعیت مامایی" }, { id: 'ج', text: "انتقال فوری برای سزارین، بدون انجام اقدامات تثبیت‌کننده" }, { id: 'د', text: "ترخیص بیمار با توصیه به مراجعه در صورت افزایش درد" }], correctAnswer: 'ب', reasoning: "درد RUQ همراه ترومبوسیتوپنی و اختلال کبدی، HELLP را مطرح می‌کند. در بیماری شدید مادر، اولویت با تثبیت و سپس ختم بارداری است؛ HELLP به‌تنهایی مساوی سزارین فوری نیست.", pitfalls: "الف = تأخیر خطرناک؛ ج = زایمان پیش از تثبیت؛ د = نادیده‌گرفتن بیماری شدید." },
+            { id: 2, question: "خانم ۲۸ ساله با لوپوس در هفتهٔ ۱۱ بارداری مراجعه کرده است. فشارخون و بررسی‌های فعلی طبیعی‌اند. کدام اقدام برای کاهش خطر پره‌اکلامپسی مناسب‌تر است؟", options: [{ id: 'الف', text: "شروع آسپیرین کم‌دوز از هفتهٔ ۱۲ تا ۲۸، ترجیحاً پیش از هفتهٔ ۱۶" }, { id: 'ب', text: "تجویز ویتامین C و E با دوز بالا" }, { id: 'ج', text: "شروع هپارین بدون وجود اندیکاسیون دیگر" }, { id: 'د', text: "صبر تا هفتهٔ ۳۲ و سپس شروع آسپیرین" }], correctAnswer: 'الف', reasoning: "بیماری‌های خودایمنی از ریسک‌فاکتورهای پرخطر پره‌اکلامپسی هستند.", pitfalls: "ب = داروی بدون نقش اثبات‌شده در منبع؛ ج = هپارین بدون اندیکاسیون؛ د = خطای زمان‌بندی." },
+            { id: 3, question: "خانمی که در بارداری مبتلا به دیابت بارداری بوده، پس از زایمان برای پیگیری مراجعه کرده است. کدام بررسی منبعی برای ارزیابی اختلال گلوکز پس از زایمان مناسب‌تر است؟", options: [{ id: 'الف', text: "GCT با ۵۰ گرم گلوکز" }, { id: 'ب', text: "OGTT با ۷۵ گرم گلوکز" }, { id: 'ج', text: "قند خون یک ساعت پس از غذا به‌تنهایی" }, { id: 'د', text: "شروع انسولین بدون انجام ارزیابی مجدد" }], correctAnswer: 'ب', reasoning: "پیگیری پس از زایمان در GDM با OGTT ۷۵ گرمی انجام می‌شود.", pitfalls: "الف = تست غربالگری بارداری؛ ج = ارزیابی ناکافی؛ د = درمان پیش از اثبات نیاز." },
+            { id: 4, question: "جنین یک مادر باردار دچار FGR است و در داپلر شریان نافی، جریان پایان‌دیاستولی معکوس دیده می‌شود. مادر و جنین فعلاً پایدارند. کدام تفسیر درست‌تر است؟", options: [{ id: 'الف', text: "تا هفتهٔ ۳۹ نیازی به تغییر برنامه وجود ندارد." }, { id: 'ب', text: "فقط بر اساس داپلر باید یک هفتهٔ قطعی و ثابت برای زایمان تعیین کرد." }, { id: 'ج', text: "این یافته با افزایش عوارض پری‌ناتال همراه است و نیاز به ختم زودتر دارد؛ زمان دقیق بر اساس وضعیت مادر، جنین و شرایط مامایی تعیین می‌شود." }, { id: 'د', text: "داپلر شریان نافی در FGR ارزشی ندارد." }], correctAnswer: 'ج', reasoning: "حذف یا معکوس‌شدن جریان پایان‌دیاستولی، نشانهٔ مقاومت شدید جفتی است.", pitfalls: "الف = تأخیر؛ ب = ساختن عدد ثابت خارج از منبع؛ د = نادیده‌گرفتن تست کلیدی." },
+            { id: 5, question: "خانم شیرده با لکه‌بینی مراجعه کرده است. علائم حیاتی پایدار است، رحم در سونوگرافی خالی است و تودهٔ آدنکسال کوچک بدون ضربان قلب دیده می‌شود. β-hCG برابر ۳۷۰۰ است. بهترین درمان فعال کدام است؟", options: [{ id: 'الف', text: "متوترکسات تک‌دوز" }, { id: 'ب', text: "لاپاروسکوپی" }, { id: 'ج', text: "فقط تکرار β-hCG در ۴۸ ساعت" }, { id: 'د', text: "ساکشن کورتاژ" }], correctAnswer: 'ب', reasoning: "بیمار از نظر معیارهای بالینی می‌تواند کاندید درمان فعال باشد، اما شیردهی منع مطلق متوترکسات است؛ بنابراین درمان جراحی مطرح می‌شود.", pitfalls: "الف = حذف عامل شیردهی؛ ج = تأخیر درمان؛ د = درمان نامرتبط با تودهٔ آدنکسال." },
+            { id: 6, question: "بلافاصله پس از زایمان، بیمار دچار خونریزی شدید شده است. فوندوس رحم از روی شکم لمس نمی‌شود و توده‌ای در واژن دیده می‌شود. اولین اقدام مناسب چیست؟", options: [{ id: 'الف', text: "کشیدن بند ناف" }, { id: 'ب', text: "جااندازی دستی رحم و استفاده از شل‌کنندهٔ رحمی در صورت نیاز" }, { id: 'ج', text: "افزایش اکسی‌توسین و ماساژ تودهٔ واژینال" }, { id: 'د', text: "هیسترکتومی فوری بدون تلاش برای جااندازی" }], correctAnswer: 'ب', reasoning: "عدم لمس فوندوس همراه با تودهٔ واژینال، وارونگی رحم را مطرح می‌کند.", pitfalls: "الف = تشدید آسیب؛ ج = درمان آتونی، نه وارونگی؛ د = اقدام بیش‌ازحد پیش از جااندازی دستی." },
+            { id: 7, question: "خانم باردار در نخستین ویزیت، BMI برابر ۳۵ و سابقهٔ تولد نوزاد ۴۳۰۰ گرمی دارد. مناسب‌ترین رویکرد غربالگری دیابت چیست؟", options: [{ id: 'الف', text: "انتظار تا هفتهٔ ۲۴ تا ۲۸" }, { id: 'ب', text: "انجام غربالگری دیابت در نخستین ویزیت" }, { id: 'ج', text: "شروع انسولین بدون آزمایش" }, { id: 'د', text: "درخواست آمنیوسنتز برای بررسی ماکروزومی" }], correctAnswer: 'ب', reasoning: "چاقی و سابقهٔ نوزاد درشت، بیمار را پرخطر می‌کند؛ بنابراین نباید تا غربالگری روتین صبر کرد.", pitfalls: "الف = خطای زمان‌بندی؛ ج = درمان بدون تشخیص؛ د = تست نامرتبط." },
+            { id: 8, question: "خانم باردارِ دارای صلاحیت تصمیم‌گیری، با وجود توضیح خطرات، سزارین پیشنهادی را نمی‌پذیرد. کدام برخورد حرفه‌ای مناسب‌تر است؟", options: [{ id: 'الف', text: "اجبار بیمار به سزارین با حکم قانونی" }, { id: 'ب', text: "بررسی نگرانی‌های بیمار، توضیح شفاف خطرات و گزینه‌ها، مستندسازی تصمیم و احترام به رد درمان" }, { id: 'ج', text: "درخواست روان‌پزشکی فقط برای بی‌اعتبارکردن تصمیم بیمار" }, { id: 'د', text: "تهدید بیمار به قطع درمان" }], correctAnswer: 'ب', reasoning: "زن باردارِ دارای ظرفیت تصمیم‌گیری حق رد درمان پیشنهادی را دارد.", pitfalls: "الف، ج و د = نقض استقلال بیمار و برخورد غیرحرفه‌ای." },
+            { id: 9, question: "خانم باردار مبتلا به اکلامپسی، پس از دریافت دوز بارگیری سولفات منیزیم، دوباره تشنج می‌کند. اقدام دارویی ارجح چیست؟", options: [{ id: 'الف', text: "دیازپام به‌عنوان درمان خط اول" }, { id: 'ب', text: "فنی‌توئین به‌عنوان درمان خط اول" }, { id: 'ج', text: "دوز اضافی ۲ تا ۴ گرم سولفات منیزیم وریدی" }, { id: 'د', text: "سزارین در حین تشنج فعال" }], correctAnswer: 'ج', reasoning: "تشنج مجدد حین دریافت منیزیم با دوز اضافی سولفات منیزیم درمان می‌شود.", pitfalls: "الف و ب = انتخاب نادرست داروی خط اول؛ د = ختم بارداری پیش از تثبیت مادر." },
+            { id: 10, question: "خانم ۲۹ ساله با سقط‌های مکرر و آنتی‌کاردیولیپین مثبت، در هفتهٔ ۷ بارداری مراجعه کرده است. درمان منبعی کدام است؟", options: [{ id: 'الف', text: "آسپیرین کم‌دوز به‌تنهایی" }, { id: 'ب', text: "هپارین شکسته‌نشده همراه آسپیرین کم‌دوز" }, { id: 'ج', text: "وارفارین در سه‌ماههٔ اول" }, { id: 'د', text: "پردنیزولون با دوز بالا" }], correctAnswer: 'ب', reasoning: "در APS همراه سقط مکرر، درمان منبعی با شروع بارداری شامل آسپیرین کم‌دوز و هپارین شکسته‌نشده است.", pitfalls: "الف = ناکافی؛ ج = داروی نامناسب در بارداری؛ د = درمان بدون پشتوانهٔ منبع." },
+            { id: 11, question: "خانم جوانی با خونریزی اوایل بارداری، تهوع شدید، رحم بزرگ‌تر از سن بارداری، β-hCG بالا و نمای طوفان برف مراجعه کرده است. کدام مورد جزء ارزیابی روتین پیش از ساکشن کورتاژ نیست؟", options: [{ id: 'الف', text: "β-hCG پایه و CBC" }, { id: 'ب', text: "رادیوگرافی قفسهٔ سینه" }, { id: 'ج', text: "CT مغز و ریه" }, { id: 'د', text: "گروه خونی، آزمایش‌های انعقادی و بررسی تیروئید در صورت وجود شواهد بالینی" }], correctAnswer: 'ج', reasoning: "CT مغز و ریه ارزیابی روتین پیش از تخلیهٔ مول نیست.", pitfalls: "سایر گزینه‌ها در ارزیابی پایه یا بر اساس وضعیت بالینی مطرح هستند." },
+            { id: 12, question: "خانم ۳۷ ساله با دو سزارین قبلی و جفت سرراهی، در بررسی‌ها مشکوک به چسبندگی غیرطبیعی جفت است. رویکرد منبعی مناسب‌تر کدام است؟", options: [{ id: 'الف', text: "کوشش برای جداکردن جفت پس از خروج جنین" }, { id: 'ب', text: "سزارین هیسترکتومی برنامه‌ریزی‌شده با باقی‌گذاشتن جفت در رحم" }, { id: 'ج', text: "انتظار برای جداشدن خودبه‌خودی جفت با ماساژ شدید رحم" }, { id: 'د', text: "تجویز داروی یوتروتونیک به‌عنوان درمان قطعی آکرتا" }], correctAnswer: 'ب', reasoning: "جفت سرراهی همراه سزارین قبلی، خطر آکرتا را بالا می‌برد؛ جداکردن اجباری جفت می‌تواند خونریزی را تشدید کند.", pitfalls: "الف و ج = تشدید خونریزی؛ د = درمان نامتناسب با مکانیسم بیماری." },
+            { id: 13, question: "خانم باردار با علائم روزانهٔ آسم، بیدارشدن شبانه بیش از یک‌بار در هفته و محدودیت فعالیت روزانه مراجعه کرده است. مناسب‌ترین درمان نگهدارنده چیست؟", options: [{ id: 'الف', text: "سالبوتامول فقط در صورت نیاز" }, { id: 'ب', text: "کورتیکواستروئید استنشاقی کم‌دوز همراه سالمترول" }, { id: 'ج', text: "کورتیکواستروئید خوراکی روزانه به‌عنوان اولین انتخاب" }, { id: 'د', text: "قطع تمام درمان‌ها تا پس از زایمان" }], correctAnswer: 'ب', reasoning: "تابلوی بیمار با آسم پایدار متوسط سازگار است.", pitfalls: "الف = درمان ناکافی؛ ج = بیش‌درمانی؛ د = خطر هیپوکسی مادر و جنین." },
+            { id: 14, question: "دختر ۱۶ ساله با آمنورهٔ اولیه، فقدان تکامل پستان، FSH بالا و کاریوتایپ 45,XO مراجعه کرده است. کدام ترتیب درمانی صحیح‌تر است؟", options: [{ id: 'الف', text: "پروژسترون فوری پیش از هر درمان دیگر" }, { id: 'ب', text: "استروژن با دوز بالا پیش از هورمون رشد" }, { id: 'ج', text: "هورمون رشد پیش از شروع استروژن کم‌دوز و سپس افزودن پروژسترون در مرحلهٔ مناسب تکامل پستان" }, { id: 'د', text: "عدم درمان تا پس از ۱۸ سالگی" }], correctAnswer: 'ج', reasoning: "در ترنر، هورمون رشد پیش از استروژن آغاز می‌شود؛ پروژسترون نیز نباید زودتر از تکامل مناسب پستان تجویز شود.", pitfalls: "الف و ب = ترتیب درمانی غلط؛ د = تأخیر غیرموجه." },
+            { id: 15, question: "خانم باردار در هفتهٔ ۲۹ با PPROM، انقباضات منظم و دیلاتاسیون ۶ سانتی‌متری مراجعه کرده است. شواهد عفونت وجود ندارد و وضعیت جنین اطمینان‌بخش است. کدام رویکرد مناسب‌تر است؟", options: [{ id: 'الف', text: "نیفدیپین برای توقف زایمان تا ۴۸ ساعت" }, { id: 'ب', text: "کورتیکواستروئید، سولفات منیزیم برای محافظت عصبی جنین و پروفیلاکسی GBS؛ بدون توکولیز" }, { id: 'ج', text: "سزارین اجباری بدون وجود اندیکاسیون مامایی" }, { id: 'د', text: "پروژسترون برای متوقف‌کردن لیبر فعال" }], correctAnswer: 'ب', reasoning: "PPROM و دیلاتاسیون پیشرفته از موارد نامناسب برای توکولیز هستند.", pitfalls: "الف = خطای زمان‌بندی؛ ج = سزارین غیرضروری؛ د = کاربرد نادرست پروژسترون." },
+            { id: 16, question: "خانم ۲۶ ساله با اندومتریوز و درد لگنی، پس از جراحی فعلاً قصد بارداری ندارد. مناسب‌ترین اصل درمانی پس از کنترل جراحی کدام است؟", options: [{ id: 'الف', text: "اصرار بر بارداری فوری" }, { id: 'ب', text: "درمان هورمونی سرکوب‌گر برای کنترل علائم با توضیح احتمال عود پس از قطع درمان" }, { id: 'ج', text: "اطمینان از درمان قطعی و عدم نیاز به پیگیری" }, { id: 'د', text: "شروع درمان ناباروری بدون وجود تمایل به بارداری" }], correctAnswer: 'ب', reasoning: "انتخاب درمان در اندومتریوز باید با درد، شدت بیماری و تمایل به باروری هماهنگ باشد.", pitfalls: "الف و د = نادیده‌گرفتن ترجیح بیمار؛ ج = تصور نادرست درمان قطعی." },
+            { id: 17, question: "خانم باردار در نیمهٔ دوم بارداری با خارش شدید کف دست و پا، بدون راش پوستی، افزایش اسیدهای صفراوی و افزایش خفیف ترانس‌آمینازها مراجعه کرده است. مناسب‌ترین درمان دارویی چیست؟", options: [{ id: 'الف', text: "اورسودئوکسی‌کولیک اسید" }, { id: 'ب', text: "آنتی‌بیوتیک وسیع‌الطیف" }, { id: 'ج', text: "کورتیکواستروئید خوراکی برای درمان اصلی بیماری" }, { id: 'د', text: "قطع بارداری فقط بر اساس وجود خارش" }], correctAnswer: 'الف', reasoning: "تابلوی بیمار با کلستاز داخل‌کبدی حاملگی هماهنگ است و UDCA به کاهش اسیدهای صفراوی و خارش کمک می‌کند.", pitfalls: "د = زمان ختم را نمی‌توان فقط بر اساس خارش یا عددی خارج از منبع تعیین کرد." },
+            { id: 18, question: "در پاپ‌اسمیر خانم ۴۷ ساله، سلول‌های غده‌ای آتیپیک گزارش شده است. مناسب‌ترین اقدام بعدی کدام است؟", options: [{ id: 'الف', text: "تکرار پاپ‌اسمیر شش ماه بعد" }, { id: 'ب', text: "بیوپسی اندومتر" }, { id: 'ج', text: "هیسترکتومی" }, { id: 'د', text: "درمان با استروژن موضعی و تکرار سیتولوژی" }], correctAnswer: 'ب', reasoning: "وجود سلول‌های غده‌ای یا اندومتریال آتیپیک در سیتولوژی، ارزیابی اندومتر را مطرح می‌کند.", pitfalls: "الف و د = تأخیر در ارزیابی تشخیصی؛ ج = اقدام قطعی پیش از اثبات بافت‌شناسی." },
+            { id: 19, question: "خانم ۳۶ ساله با فشارخون مزمن در هفتهٔ ۱۰ بارداری مراجعه کرده است. BMI او ۳۲ است. مناسب‌ترین پیشگیری از پره‌اکلامپسی کدام است؟", options: [{ id: 'الف', text: "ویتامین C و E" }, { id: 'ب', text: "آسپیرین کم‌دوز از هفتهٔ ۱۲ تا ۲۸، ترجیحاً پیش از هفتهٔ ۱۶" }, { id: 'ج', text: "هپارین بدون وجود APS" }, { id: 'د', text: "آسپیرین کم‌دوز از هفتهٔ ۳۲" }], correctAnswer: 'ب', reasoning: "فشارخون مزمن به‌تنهایی ریسک‌فاکتور پرخطر است.", pitfalls: "الف و ج = درمان نامناسب؛ د = شروع دیرهنگام." },
+            { id: 20, question: "مادر باردار در سه‌ماههٔ سوم دچار ایست قلبی ـ تنفسی شده است. CPR فوری و مؤثر آغاز شده، اما پس از ۴ دقیقه بازگشت گردش خون رخ نداده است. اقدام مهم بعدی چیست؟", options: [{ id: 'الف', text: "توقف CPR برای ارزیابی ضربان قلب جنین" }, { id: 'ب', text: "انتقال بیمار به اتاق عمل و سپس تصمیم‌گیری" }, { id: 'ج', text: "درنظرگرفتن سزارین اورژانس هم‌زمان با تداوم احیا" }, { id: 'د', text: "ادامهٔ CPR برای ۱۵ دقیقهٔ دیگر، بدون بررسی امکان سزارین" }], correctAnswer: 'ج', reasoning: "در سه‌ماههٔ سوم، سزارین اورژانس می‌تواند با کاهش فشار رحم بر عروق بزرگ، احیای مادر را نیز مؤثرتر کند.", pitfalls: "الف و ب = ایجاد تأخیر؛ د = نادیده‌گرفتن تصمیم زمان‌حساس." }
+        ];
 
-          <div className="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden mb-6">
-            <div className="p-6 sm:p-8 border-b border-slate-100">
-              <h2 className="text-lg sm:text-xl font-semibold text-slate-800 leading-relaxed">
-                <span className="text-slate-400 ml-2">{question.id}.</span>
-                {question.question}
-              </h2>
-            </div>
+        const totalQuestions = quizData.length;
 
-            <div className="p-6 sm:p-8 space-y-6">
-              
-              {/* Student's Answer */}
-              <div>
-                <h3 className="text-sm font-bold text-slate-500 mb-2">پاسخ شما:</h3>
-                {studentAnswerId ? (
-                  <div className={`p-4 rounded-xl border flex items-start ${isCorrect ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'}`}>
-                    <span className={`flex-shrink-0 w-8 h-8 rounded-full border flex items-center justify-center ml-3 font-bold ${isCorrect ? 'border-emerald-400 bg-emerald-100' : 'border-rose-400 bg-rose-100'}`}>
-                      {studentAnswerId}
-                    </span>
-                    <span className="flex-grow pt-1 leading-relaxed">{studentOptionObj?.text}</span>
-                    <span className="mr-3 mt-1 flex-shrink-0">
-                      {isCorrect ? <CheckCircleIcon /> : <XCircleIcon />}
-                    </span>
-                  </div>
-                ) : (
-                  <div className="p-4 rounded-xl border bg-slate-50 border-slate-200 text-slate-500 flex items-center">
-                    بدون پاسخ (ثبت نشده)
-                  </div>
-                )}
-              </div>
+        // --- آیکون‌ها (SVG) ---
+        const icons = {
+            check: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-500"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>',
+            cross: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-rose-500"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>',
+            info: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500 ml-2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>',
+            alert: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-500 ml-2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>',
+            stethoscope: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-teal-600 ml-3 h-7 w-7"><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"></path><path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"></path><circle cx="20" cy="10" r="2"></circle></svg>',
+            stethoscopeLg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-teal-600 ml-0 h-12 w-12"><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"></path><path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"></path><circle cx="20" cy="10" r="2"></circle></svg>',
+            play: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>',
+            book: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>',
+            home: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>',
+            chevronRight: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-1"><path d="m9 18 6-6-6-6"></path></svg>',
+            chevronLeft: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><path d="m15 18-6-6 6-6"></path></svg>'
+        };
 
-              {/* Correct Answer (Show only if student was wrong or skipped) */}
-              {!isCorrect && (
-                <div>
-                  <h3 className="text-sm font-bold text-slate-500 mb-2">گزینه صحیح:</h3>
-                  <div className="p-4 rounded-xl border bg-emerald-50 border-emerald-200 text-emerald-800 flex items-start">
-                    <span className="flex-shrink-0 w-8 h-8 rounded-full border border-emerald-400 bg-emerald-100 flex items-center justify-center ml-3 font-bold">
-                      {correctOptionObj?.id}
-                    </span>
-                    <span className="flex-grow pt-1 leading-relaxed">{correctOptionObj?.text}</span>
-                    <span className="mr-3 mt-1 flex-shrink-0"><CheckCircleIcon /></span>
-                  </div>
-                </div>
-              )}
-              
-            </div>
+        // --- متغیرهای State برنامه ---
+        let appState = 'start'; // 'start', 'quiz', 'results', 'review'
+        let currentQuestionIndex = 0;
+        let reviewIndex = 0;
+        let userAnswers = {}; // Format: { questionId: 'الف' }
+        let currentSelectedOption = null;
 
-            {/* Explanation Section */}
-            <div className="bg-slate-50 border-t border-slate-100 p-6 sm:p-8">
-              <div className="mb-6">
-                <div className="flex items-center mb-2">
-                  <InfoIcon />
-                  <h3 className="font-bold text-slate-800 text-lg">پاسخ‌نامه (مسیر حل)</h3>
-                </div>
-                <p className="text-slate-700 leading-relaxed bg-white p-5 rounded-xl border border-slate-200 shadow-sm text-justify">
-                  {question.reasoning}
-                </p>
-              </div>
-              
-              <div>
-                <div className="flex items-center mb-2">
-                  <AlertTriangleIcon />
-                  <h3 className="font-bold text-slate-800 text-lg">دام‌های آموزشی</h3>
-                </div>
-                <p className="text-slate-700 leading-relaxed bg-amber-50 p-5 rounded-xl border border-amber-200 shadow-sm text-justify">
-                  {question.pitfalls}
-                </p>
-              </div>
-            </div>
-          </div>
+        // --- توابع تغییر State و رندر ---
+        const appContainer = document.getElementById('app-container');
 
-          {/* Navigation Controls in Review */}
-          <div className="flex items-center justify-between mt-4">
-            <button
-              onClick={() => setReviewIndex(prev => prev - 1)}
-              disabled={reviewIndex === 0}
-              className={`flex items-center px-5 py-3 rounded-xl font-medium transition-all ${
-                reviewIndex === 0 
-                  ? "text-slate-300 cursor-not-allowed bg-transparent" 
-                  : "text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 shadow-sm"
-              }`}
-            >
-              <ChevronRightIcon />
-              سوال قبلی
-            </button>
-
-            {reviewIndex < totalQuestions - 1 ? (
-              <button
-                onClick={() => setReviewIndex(prev => prev + 1)}
-                className="flex items-center px-5 py-3 rounded-xl font-medium bg-slate-800 text-white hover:bg-slate-900 shadow-md transition-all"
-              >
-                سوال بعدی
-                <ChevronLeftIcon />
-              </button>
-            ) : (
-              <button
-                onClick={() => setAppState('results')}
-                className="flex items-center px-5 py-3 rounded-xl font-medium bg-teal-600 text-white hover:bg-teal-700 shadow-md transition-all"
-              >
-                پایان مرور
-              </button>
-            )}
-          </div>
-
-        </div>
-      </div>
-    );
-  }
-
-  // --- Quiz Screen ---
-  const question = quizData[currentQuestionIndex];
-
-  return (
-    <div dir="rtl" className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8 text-right">
-      <div className="max-w-4xl mx-auto">
-        
-        {/* Header */}
-        <header className="flex items-center justify-between mb-8 pb-4 border-b border-slate-200">
-          <div className="flex items-center">
-            <StethoscopeIcon />
-            <h1 className="text-2xl font-bold text-slate-800">آزمون زنان و زایمان</h1>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="text-sm font-medium text-slate-500 bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-100">
-              سوال {currentQuestionIndex + 1} از {totalQuestions}
-            </div>
-            <button 
-              onClick={endQuiz}
-              className="text-sm font-medium text-slate-400 hover:text-rose-500 transition-colors"
-            >
-              پایان/خروج
-            </button>
-          </div>
-        </header>
-
-        {/* Progress Bar */}
-        <div className="w-full bg-slate-200 rounded-full h-2 mb-8">
-          <div 
-            className="bg-teal-500 h-2 rounded-full transition-all duration-500 ease-out" 
-            style={{ width: `${((currentQuestionIndex + 1) / totalQuestions) * 100}%` }}
-          ></div>
-        </div>
-
-        {/* Main Card */}
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden mb-6">
-          <div className="p-6 sm:p-8">
-            <h2 className="text-lg sm:text-xl font-semibold text-slate-800 leading-relaxed mb-6">
-              <span className="text-teal-600 ml-2">{question.id}.</span>
-              {question.question}
-            </h2>
-
-            <div className="space-y-3">
-              {question.options.map((option) => {
-                const isSelected = selectedOption === option.id;
-                const isCorrectAnswer = option.id === question.correctAnswer;
+        function render() {
+            if (appState === 'start') {
+                appContainer.innerHTML = `
+                    <div class="flex flex-col items-center justify-center p-4 min-h-screen">
+                        <div class="bg-white rounded-3xl shadow-xl w-full max-w-2xl p-10 text-center border border-slate-100">
+                            <div class="mx-auto bg-teal-50 w-24 h-24 rounded-full flex items-center justify-center mb-6">
+                                ${icons.stethoscopeLg}
+                            </div>
+                            <h1 class="text-3xl font-extrabold text-slate-800 mb-4 leading-relaxed">
+                                مجموعهٔ بازطراحی‌شدهٔ<br/> منبع‌بسته زنان و زایمان
+                            </h1>
+                            <p class="text-slate-500 mb-10 text-lg leading-relaxed">
+                                این آزمون شامل ۲۰ سوال تخصصی است. در حین آزمون بازخوردی نمایش داده نمی‌شود. پس از پاسخ به تمامی سوالات، درصد شما محاسبه شده و می‌توانید پاسخ‌نامه تشریحی را مرور کنید.
+                            </p>
+                            <button onclick="startQuiz()" class="inline-flex items-center justify-center px-8 py-4 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl font-bold text-lg transition-all shadow-lg hover:shadow-teal-500/30 transform hover:-translate-y-1">
+                                ${icons.play}
+                                شروع آزمون
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } 
+            else if (appState === 'quiz') {
+                const q = quizData[currentQuestionIndex];
+                const progressWidth = ((currentQuestionIndex + 1) / totalQuestions) * 100;
                 
-                let optionStyle = "border-slate-200 bg-white hover:bg-slate-50 text-slate-700";
+                let optionsHtml = '';
+                q.options.forEach(opt => {
+                    const isSelected = currentSelectedOption === opt.id;
+                    const styleClass = isSelected ? 'border-teal-500 bg-teal-50 text-teal-800 ring-1 ring-teal-500' : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700';
+                    optionsHtml += `
+                        <button onclick="selectOption('${opt.id}')" class="w-full text-right flex items-start p-4 rounded-xl border-2 transition-all duration-200 ${styleClass}">
+                            <span class="flex-shrink-0 w-8 h-8 rounded-full border border-current flex items-center justify-center ml-4 font-medium">${opt.id}</span>
+                            <span class="flex-grow pt-1 leading-relaxed">${opt.text}</span>
+                        </button>
+                    `;
+                });
+
+                const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
+                const nextBtnText = isLastQuestion ? "پایان آزمون" : "سوال بعدی";
                 
-                if (isAnswerChecked) {
-                  if (isCorrectAnswer) {
-                    optionStyle = "border-emerald-500 bg-emerald-50 text-emerald-800";
-                  } else if (isSelected && !isCorrectAnswer) {
-                    optionStyle = "border-rose-500 bg-rose-50 text-rose-800";
-                  } else {
-                    optionStyle = "border-slate-200 bg-slate-50 text-slate-400 opacity-70";
-                  }
-                } else if (isSelected) {
-                  optionStyle = "border-teal-500 bg-teal-50 text-teal-800 ring-1 ring-teal-500";
+                appContainer.innerHTML = `
+                    <div class="py-8 px-4 sm:px-6 lg:px-8 text-right max-w-4xl mx-auto">
+                        <header class="flex flex-col sm:flex-row items-center justify-between mb-8 pb-4 border-b border-slate-200 gap-4">
+                            <div class="flex items-center">
+                                ${icons.stethoscope}
+                                <h1 class="text-2xl font-bold text-slate-800">آزمون زنان و زایمان</h1>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <div class="text-sm font-medium text-slate-500 bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-100">
+                                    سوال ${currentQuestionIndex + 1} از ${totalQuestions}
+                                </div>
+                                <button onclick="endQuiz()" class="text-sm font-medium text-slate-400 hover:text-rose-500 transition-colors">
+                                    پایان زودهنگام/خروج
+                                </button>
+                            </div>
+                        </header>
+
+                        <div class="w-full bg-slate-200 rounded-full h-2 mb-8">
+                            <div class="bg-teal-500 h-2 rounded-full transition-all duration-300 ease-out" style="width: ${progressWidth}%"></div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden mb-6">
+                            <div class="p-6 sm:p-8">
+                                <h2 class="text-lg sm:text-xl font-semibold text-slate-800 leading-relaxed mb-6">
+                                    <span class="text-teal-600 ml-2">${q.id}.</span>
+                                    ${q.question}
+                                </h2>
+
+                                <div class="space-y-3">
+                                    ${optionsHtml}
+                                </div>
+
+                                <div class="mt-8 flex justify-between items-center border-t border-slate-100 pt-6">
+                                    <button onclick="prevQuizQuestion()" ${currentQuestionIndex === 0 ? 'disabled' : ''} class="flex items-center px-6 py-3 rounded-xl font-medium transition-all ${currentQuestionIndex === 0 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 bg-slate-100 hover:bg-slate-200'}">
+                                        ${icons.chevronRight}
+                                        سوال قبلی
+                                    </button>
+                                    
+                                    <button onclick="nextQuizQuestion()" class="flex items-center px-8 py-3 rounded-xl font-medium bg-slate-800 text-white hover:bg-slate-900 shadow-md transition-all transform hover:-translate-y-0.5">
+                                        ${nextBtnText}
+                                        ${icons.chevronLeft}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            else if (appState === 'results') {
+                let score = 0;
+                quizData.forEach(q => {
+                    if (userAnswers[q.id] === q.correctAnswer) score++;
+                });
+                const percentage = Math.round((score / totalQuestions) * 100);
+                const colorClass = percentage >= 50 ? 'text-teal-600' : 'text-rose-500';
+
+                appContainer.innerHTML = `
+                    <div class="flex items-center justify-center p-4 min-h-screen">
+                        <div class="bg-white rounded-3xl shadow-xl w-full max-w-2xl p-10 text-center border border-slate-100">
+                            <h2 class="text-3xl font-bold text-slate-800 mb-2">نتیجهٔ ارزیابی</h2>
+                            <p class="text-slate-500 mb-8">پاسخ‌های شما با موفقیت ثبت و بررسی شد.</p>
+                            
+                            <div class="bg-slate-50 rounded-2xl p-8 mb-10 inline-block shadow-inner border border-slate-100 min-w-[250px]">
+                                <div class="text-6xl font-black mb-3 ${colorClass}">
+                                    ${percentage}٪
+                                </div>
+                                <div class="text-slate-600 text-lg">
+                                    پاسخ صحیح: <span class="font-bold text-slate-800 text-xl mx-1">${score}</span> از <span class="font-bold text-slate-800 text-xl mx-1">${totalQuestions}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                                <button onclick="startReview()" class="flex items-center justify-center px-6 py-3 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-medium transition-colors shadow-md">
+                                    ${icons.book}
+                                    مرور پاسخ‌نامه
+                                </button>
+                                <button onclick="startQuiz()" class="flex items-center justify-center px-6 py-3 bg-teal-50 hover:bg-teal-100 text-teal-700 rounded-xl font-medium transition-colors border border-teal-200">
+                                    شروع مجدد
+                                </button>
+                                <button onclick="goHome()" class="flex items-center justify-center px-6 py-3 text-slate-500 hover:bg-slate-100 rounded-xl font-medium transition-colors">
+                                    ${icons.home}
+                                    خروج
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            else if (appState === 'review') {
+                const q = quizData[reviewIndex];
+                const stAnswer = userAnswers[q.id];
+                const isCorrect = stAnswer === q.correctAnswer;
+                
+                const correctOpt = q.options.find(o => o.id === q.correctAnswer);
+                const stOpt = q.options.find(o => o.id === stAnswer);
+
+                let stAnswerHtml = '';
+                if (stAnswer) {
+                    const bgClass = isCorrect ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800';
+                    const circleClass = isCorrect ? 'border-emerald-400 bg-emerald-100' : 'border-rose-400 bg-rose-100';
+                    const iconHtml = isCorrect ? icons.check : icons.cross;
+                    
+                    stAnswerHtml = `
+                        <div class="p-4 rounded-xl border flex items-start ${bgClass}">
+                            <span class="flex-shrink-0 w-8 h-8 rounded-full border flex items-center justify-center ml-3 font-bold ${circleClass}">${stAnswer}</span>
+                            <span class="flex-grow pt-1 leading-relaxed">${stOpt ? stOpt.text : ''}</span>
+                            <span class="mr-3 mt-1 flex-shrink-0">${iconHtml}</span>
+                        </div>
+                    `;
+                } else {
+                    stAnswerHtml = `
+                        <div class="p-4 rounded-xl border bg-slate-50 border-slate-200 text-slate-500 flex items-center">
+                            بدون پاسخ (در طول آزمون گزینه‌ای انتخاب نشد)
+                        </div>
+                    `;
                 }
 
-                return (
-                  <button
-                    key={option.id}
-                    onClick={() => handleOptionSelect(option.id)}
-                    disabled={isAnswerChecked}
-                    className={`w-full text-right flex items-start p-4 rounded-xl border-2 transition-all duration-200 ${optionStyle}`}
-                  >
-                    <span className="flex-shrink-0 w-8 h-8 rounded-full border border-current flex items-center justify-center ml-4 font-medium">
-                      {option.id}
-                    </span>
-                    <span className="flex-grow pt-1 leading-relaxed">
-                      {option.text}
-                    </span>
-                    {isAnswerChecked && isCorrectAnswer && (
-                      <span className="flex-shrink-0 mr-4 mt-1">
-                        <CheckCircleIcon />
-                      </span>
-                    )}
-                    {isAnswerChecked && isSelected && !isCorrectAnswer && (
-                      <span className="flex-shrink-0 mr-4 mt-1">
-                        <XCircleIcon />
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+                let correctHtml = '';
+                if (!isCorrect) {
+                    correctHtml = `
+                        <div class="mt-4">
+                            <h3 class="text-sm font-bold text-slate-500 mb-2">گزینه صحیح:</h3>
+                            <div class="p-4 rounded-xl border bg-emerald-50 border-emerald-200 text-emerald-800 flex items-start">
+                                <span class="flex-shrink-0 w-8 h-8 rounded-full border border-emerald-400 bg-emerald-100 flex items-center justify-center ml-3 font-bold">${correctOpt.id}</span>
+                                <span class="flex-grow pt-1 leading-relaxed">${correctOpt.text}</span>
+                                <span class="mr-3 mt-1 flex-shrink-0">${icons.check}</span>
+                            </div>
+                        </div>
+                    `;
+                }
 
-            {/* Check Action */}
-            {!isAnswerChecked && (
-              <div className="mt-8 flex justify-end">
-                <button
-                  onClick={handleCheckAnswer}
-                  disabled={!selectedOption}
-                  className={`px-8 py-3 rounded-xl font-medium transition-all shadow-sm ${
-                    selectedOption 
-                      ? "bg-teal-600 hover:bg-teal-700 text-white shadow-md cursor-pointer transform hover:-translate-y-0.5" 
-                      : "bg-slate-100 text-slate-400 cursor-not-allowed"
-                  }`}
-                >
-                  ثبت و بررسی
-                </button>
-              </div>
-            )}
+                const prevBtnDisabled = reviewIndex === 0 ? 'disabled' : '';
+                const prevBtnClass = reviewIndex === 0 ? "text-slate-300 cursor-not-allowed bg-transparent" : "text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 shadow-sm";
+                
+                const nextAction = reviewIndex < totalQuestions - 1 ? 'onclick="nextReviewQuestion()"' : 'onclick="endReview()"';
+                const nextBtnClass = reviewIndex < totalQuestions - 1 ? "bg-slate-800 text-white hover:bg-slate-900" : "bg-teal-600 text-white hover:bg-teal-700";
+                const nextBtnText = reviewIndex < totalQuestions - 1 ? "سوال بعدی " + icons.chevronLeft : "پایان مرور";
+
+                appContainer.innerHTML = `
+                    <div class="py-8 px-4 sm:px-6 lg:px-8 text-right max-w-4xl mx-auto">
+                        <header class="flex flex-col sm:flex-row items-center justify-between mb-8 pb-4 border-b border-slate-200 gap-4">
+                            <div class="flex items-center">
+                                ${icons.book}
+                                <h1 class="text-2xl font-bold text-slate-800 mr-2">پاسخ‌نامه تشریحی</h1>
+                            </div>
+                            <div class="flex gap-3 items-center">
+                                <span class="text-sm font-bold text-slate-600 bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
+                                    سوال ${reviewIndex + 1} از ${totalQuestions}
+                                </span>
+                                <button onclick="endReview()" class="text-sm text-rose-600 bg-rose-50 hover:bg-rose-100 px-4 py-2 rounded-lg font-medium transition-colors">
+                                    پایان مرور
+                                </button>
+                            </div>
+                        </header>
+
+                        <div class="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden mb-6">
+                            <div class="p-6 sm:p-8 border-b border-slate-100">
+                                <h2 class="text-lg sm:text-xl font-semibold text-slate-800 leading-relaxed">
+                                    <span class="text-slate-400 ml-2">${q.id}.</span>
+                                    ${q.question}
+                                </h2>
+                            </div>
+
+                            <div class="p-6 sm:p-8">
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-500 mb-2">پاسخ شما:</h3>
+                                    ${stAnswerHtml}
+                                </div>
+                                ${correctHtml}
+                            </div>
+
+                            <div class="bg-slate-50 border-t border-slate-100 p-6 sm:p-8">
+                                <div class="mb-6">
+                                    <div class="flex items-center mb-2">
+                                        ${icons.info}
+                                        <h3 class="font-bold text-slate-800 text-lg">پاسخ‌نامه (مسیر حل)</h3>
+                                    </div>
+                                    <p class="text-slate-700 leading-relaxed bg-white p-5 rounded-xl border border-slate-200 shadow-sm text-justify">
+                                        ${q.reasoning}
+                                    </p>
+                                </div>
+                                
+                                <div>
+                                    <div class="flex items-center mb-2">
+                                        ${icons.alert}
+                                        <h3 class="font-bold text-slate-800 text-lg">دام‌های آموزشی</h3>
+                                    </div>
+                                    <p class="text-slate-700 leading-relaxed bg-amber-50 p-5 rounded-xl border border-amber-200 shadow-sm text-justify">
+                                        ${q.pitfalls}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between mt-4">
+                            <button onclick="prevReviewQuestion()" ${prevBtnDisabled} class="flex items-center px-5 py-3 rounded-xl font-medium transition-all ${prevBtnClass}">
+                                ${icons.chevronRight}
+                                سوال قبلی
+                            </button>
+                            <button ${nextAction} class="flex items-center px-5 py-3 rounded-xl font-medium shadow-md transition-all ${nextBtnClass}">
+                                ${nextBtnText}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // --- Event Handlers (توابع اجرایی) ---
+
+        window.startQuiz = function() {
+            appState = 'quiz';
+            currentQuestionIndex = 0;
+            userAnswers = {};
+            currentSelectedOption = null;
+            render();
+        };
+
+        window.goHome = function() {
+            appState = 'start';
+            render();
+        };
+
+        window.endQuiz = function() {
+            appState = 'results';
+            render();
+        };
+
+        window.selectOption = function(optId) {
+            currentSelectedOption = optId;
+            render(); // رندر مجدد فقط برای برجسته کردن گزینه انتخابی (بدون نمایش درستی/نادرستی)
+        };
+
+        window.nextQuizQuestion = function() {
+            // ثبت پاسخ کاربر (حتی اگر نال باشد)
+            userAnswers[quizData[currentQuestionIndex].id] = currentSelectedOption;
             
-            {isAnswerChecked && (
-              <div className="mt-8 flex justify-end animate-in fade-in duration-300">
-                <button
-                  onClick={handleNextQuestion}
-                  className="flex items-center px-8 py-3 rounded-xl font-medium bg-slate-800 text-white hover:bg-slate-900 shadow-md transition-all transform hover:-translate-y-0.5"
-                >
-                  {currentQuestionIndex === totalQuestions - 1 ? "پایان و مشاهده نتایج" : "سوال بعدی"}
-                  <ChevronLeftIcon />
-                </button>
-              </div>
-            )}
-          </div>
-          
-          {/* Explanation in Quiz mode briefly visible for immediate feedback */}
-          {isAnswerChecked && (
-             <div className="bg-slate-50 border-t border-slate-100 p-6 sm:p-8 animate-in slide-in-from-top-4 duration-300">
-               <p className="text-slate-600 text-sm mb-2 text-center">جزئیات بیشتر در صفحه پایان (بخش مرور پاسخ‌نامه) در دسترس است.</p>
-             </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
+            if (currentQuestionIndex < totalQuestions - 1) {
+                currentQuestionIndex++;
+                // بازیابی پاسخ قبلی در صورت وجود
+                currentSelectedOption = userAnswers[quizData[currentQuestionIndex].id] || null;
+                render();
+            } else {
+                endQuiz();
+            }
+        };
+
+        window.prevQuizQuestion = function() {
+            if (currentQuestionIndex > 0) {
+                // ثبت پاسخ فعلی قبل از برگشت
+                userAnswers[quizData[currentQuestionIndex].id] = currentSelectedOption;
+                
+                currentQuestionIndex--;
+                currentSelectedOption = userAnswers[quizData[currentQuestionIndex].id] || null;
+                render();
+            }
+        };
+
+        window.startReview = function() {
+            appState = 'review';
+            reviewIndex = 0;
+            render();
+        };
+
+        window.nextReviewQuestion = function() {
+            if (reviewIndex < totalQuestions - 1) {
+                reviewIndex++;
+                render();
+            }
+        };
+
+        window.prevReviewQuestion = function() {
+            if (reviewIndex > 0) {
+                reviewIndex--;
+                render();
+            }
+        };
+
+        window.endReview = function() {
+            appState = 'results';
+            render();
+        };
+
+        // --- شروع اولیه برنامه ---
+        render();
+
+    </script>
+</body>
+</html>
